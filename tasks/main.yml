@@ -1,2 +1,27 @@
 ---
 # tasks file for ansible-role-checkmkagent
+
+- name: Download and install check-mk-agent package
+  apt:
+    deb: "{{ checkmkagent_agent_baseurl }}"
+  when: checkmkagent_agent_baseurl is defined
+
+- name: Ensure directory /usr/lib/check_mk_agent/custom exists
+  file:
+    path: '/usr/lib/check_mk_agent/custom'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Ensure directory /usr/lib/check_mk_agent/local exists
+  file:
+    path: '/usr/lib/check_mk_agent/local'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
+
+    # - include_tasks: monitoring-client.yml
+    # - include_tasks: monitoring-megacli.yml
+    #   when: (num_disks is defined and num_disks > 0) or (megacli_battery_adapter is defined and megacli_battery_adapter > 0)
