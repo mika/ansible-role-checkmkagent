@@ -3,8 +3,8 @@
 
 - name: Download and install check-mk-agent package
   apt:
-    deb: "{{ checkmkagent_agent_baseurl }}"
-  when: checkmkagent_agent_baseurl is defined
+    deb: "{{ checkmkagent_baseurl }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
+  when: checkmkagent_baseurl is defined
 
 - name: Ensure directory /usr/lib/check_mk_agent/custom exists
   file:

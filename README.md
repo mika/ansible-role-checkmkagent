@@ -13,10 +13,12 @@ Role Variables
 
 Take from `defaults/main.yml`:
 ```yaml
+# Set the version of the Check_Mk server
+# checkmkagent_version: '1.5.0p14'
+
 # The packaged agents can be found on the check_mk server.
-# The deb file can be found in '/check_mk/agents/check-mk-agent_$check_mk_version-1_all.deb'
-# und the 'checkmkagent_agent_baseurl'
-# checkmkagent_agent_baseurl: 'http://monitor01.example.com/$site'
+# The deb file can be found in '/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+# under the 'checkmkagent_baseurl'
 ```
 
 Dependencies
@@ -30,7 +32,7 @@ Example Playbook
 ```
     - hosts: site
       var:
-        checkmkagent_agent_baseurl: 'http://monitor01.example.com/mysite'
+        checkmkagent_baseurl: 'http://monitor01.example.com/mysite'
       roles:
          - { role: jkirk.checkmkagent }
 ```
