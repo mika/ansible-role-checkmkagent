@@ -1,7 +1,14 @@
 ---
 
-
 - name: Ensure directory /usr/lib/check_mk_agent/plugins exists
+  file:
+    path: '/usr/lib/check_mk_agent/plugins'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Ensure directory /usr/lib/check_mk_agent/plugins/60 exists
   file:
     path: '/usr/lib/check_mk_agent/plugins/60'
     state: 'directory'

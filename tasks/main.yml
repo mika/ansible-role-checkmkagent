@@ -6,14 +6,6 @@
     deb: "{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
   when: checkmkagent_host_url is defined
 
-- name: Ensure directory /usr/lib/check_mk_agent/plugins exists
-  file:
-    path: '/usr/lib/check_mk_agent/plugins'
-    state: 'directory'
-    owner: root
-    group: root
-    mode: 0755
-
 - include_tasks: checkmk-localchecks.yml
 - include_tasks: checkmk-plugins.yml
 # - include_tasks: monitoring-client.yml

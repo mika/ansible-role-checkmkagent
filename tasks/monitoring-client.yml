@@ -1,0 +1,13 @@
+---
+
+# note: this is relevant only if xinetd instead of systemd's check_mk.socket is used,
+# but install to make sure in case xinetd provides it doesn't leak the data
+# - name: Ensure file /etc/xinetd.d/check_mk isn't present
+#   file:
+#     path: '/etc/xinetd.d/check_mk'
+#     state: absent
+#
+# - name: Get rid of left over dpkg backup files for /etc/xinetd.d/check_mk
+#   file:
+#     path: '/etc/xinetd.d/check_mk.dpkg-dist'
+#     state: absent
