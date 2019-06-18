@@ -1,0 +1,17 @@
+---
+
+- name: Install libregexp-common-time-perl package for check_kernel_freshness script
+  apt:
+    name=libregexp-common-time-perl
+    state=present
+
+- name: Deploy check-mk script check_kernel_freshness
+  copy:
+    src: 'check-mk/local/check_kernel_freshness'
+    dest: '/usr/lib/check_mk_agent/local/check_kernel_freshness'
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Deploy check-mk script check_systemd
+  copy: src=files/check-mk/local/check_systemd dest=/usr/lib/check_mk_agent/local/check_systemd owner=root group=root mode=0755
