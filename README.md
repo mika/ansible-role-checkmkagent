@@ -16,9 +16,10 @@ Take from `defaults/main.yml`:
 # Set the version of the Check_Mk server
 # checkmkagent_version: '1.5.0p14'
 
-# The packaged agents can be found on the check_mk server.
-# The deb file can be found in '/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
-# under the 'checkmkagent_baseurl'
+# The agent package can be found on the check_mk server,
+# the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+# If not defined, the agent will not be installed.
+# checkmkagent_host_url: 'http://monitor01.example.com/mysite'
 ```
 
 Dependencies
@@ -32,9 +33,23 @@ Example Playbook
 ```
     - hosts: site
       var:
-        checkmkagent_baseurl: 'http://monitor01.example.com/mysite'
+        checkmkagent_host_url: 'http://monitor01.example.com/mysite'
       roles:
          - { role: jkirk.checkmkagent }
+
+    - hosts: debian
+      var:
+      roles:
+         - role: jkirk.checkmkagent
+           checkmkagent_host_url: 'http://monitor01.example.com/mysite'
+           checkmkagent_plugins: [ 'mk_apt' ]
+
+    - hosts: ceph
+      var:
+      roles:
+         - role: jkirk.checkmkagent
+           checkmkagent_host_url: 'http://monitor01.example.com/mysite'
+           checkmkagent_plugins: [ 'mk_ceph' ]
 ```
 
 License

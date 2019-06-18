@@ -1,10 +1,11 @@
 ---
 # defaults file for ansible-role-checkmkagent
 #
+
 # Set the version of the Check_Mk server
 # checkmkagent_version: '1.5.0p14'
 
-# The packaged agents can be found on the check_mk server.
-# The deb file can be found in '/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
-# under the 'checkmkagent_baseurl'
-# checkmkagent_baseurl: 'http://monitor01.example.com/$site'
+# The agent package can be found on the check_mk server,
+# the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+# If not defined, the agent will not be installed.
+# checkmkagent_host_url: 'http://monitor01.example.com/mysite'
