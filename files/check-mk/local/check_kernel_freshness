@@ -1,0 +1,527 @@
+#!/usr/bin/perl
+
+# Author: Michael Renner <michael.renner@amd.co.at>
+
+# License: MIT
+
+# This module checks if the current running Linux kernel matches the installed one.
+# See the documentation at the end of the file or use --help
+
+use constant VERSION => '1.2.0';
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+use Carp;
+use File::Basename;
+use Regexp::Common qw(time);
+
+my $help;
+my $kernel_image;
+my $no_heuristic;
+my $no_grub;
+my $no_vmlinuz;
+my $check_mk;
+my $long_help;
+my $print_version;
+my $verbose;
+
+GetOptions(
+    'help|h'           => \$help,
+    'long-help'        => \$long_help,
+    'kernel-image|k:s' => \$kernel_image,
+    'no-heuristic'     => \$no_heuristic,
+    'no-grub'          => \$no_grub,
+    'no-vmlinuz'       => \$no_vmlinuz,
+    'check-mk'         => \$check_mk,
+    'version|v'        => \$print_version,
+    'verbose'          => \$verbose,
+) or pod2usage( -verbose => 0 );
+
+pod2usage( -verbose => 1 ) if ($help);
+pod2usage( -verbose => 2 ) if ($long_help);
+
+if ($print_version) {
+	print "check_kernel_freshness " . VERSION . "\n";
+	exit 0;
+}
+
+# Linux kernel version strings are fickle beasts. It's format is defined in part by
+# https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/scripts/mkcompile_h
+# plus whatever the distributions deem a good idea.
+
+# /proc/version:
+#
+# Linux version 2.6.30-bpo.2-amd64 (Debian 2.6.30-7~bpo50+1) (nobse@debian.org) (gcc version 4.3.2 (Debian 4.3.2-1.1) ) #1 SMP Fri Sep 18 11:50:10 UTC 2009
+# Linux version 2.6.32-042stab083.2 (root@rh6-build-x64) (gcc version 4.4.6 20120305 (Red Hat 4.4.6-4) (GCC) ) #1 SMP Fri Nov 8 18:08:40 MSK 2013
+# Linux version 3.2.0-4-amd64 (debian-kernel@lists.debian.org) (gcc version 4.6.3 (Debian 4.6.3-14) ) #1 SMP Debian 3.2.57-3+deb7u2
+# Linux version 3.11-0.bpo.2-amd64 (debian-kernel@lists.debian.org) (gcc version 4.6.3 (Debian 4.6.3-14) ) #1 SMP Debian 3.11.8-1~bpo70+1 (2013-11-21)
+# Linux version 4.4.40-1-pve (root@nora) (gcc version 4.9.2 (Debian 4.9.2-10) ) #1 SMP Wed Feb 8 16:13:20 CET 2017
+
+# strings in kernel image:
+#
+# 2.6.32-042stab090.5 (root@kbuild-rh6-x64) #1 SMP Sat Jun 21 00:15:09 MSK 2014
+# 2.6.32-5-openvz-amd64 (unknown@Debian) #1 SMP Tue May 13 17:16:50 UTC 2014
+# 3.2.0-4-amd64 (debian-kernel@lists.debian.org) #1 SMP Debian 3.2.60-1+deb7u1
+# 3.14-0.bpo.1-amd64 (debian-kernel@lists.debian.org) #1 SMP Debian 3.14.7-1~bpo70+1 (2014-06-21)
+# 4.4.40-1-pve (root@nora) #1 SMP PVE 4.4.40-82 (Thu, 23 Feb 2017 15:14:06 +0100)
+
+
+my $versionRE = qr!
+^                                   # Line Begin Anchor
+    (?:Linux\sversion\s)?           # Optional prefix found in /proc/version
+    (\d+\.\d+\S+)                   # Kernel Version
+    .*                              # Match as much as possible
+    (                               # Begin UTS version Field
+        \#\d+                       # Start with the build number
+        .*                          # Match anything
+        (?:
+            $RE{time}{mail}?        # rfc-2822 date
+            |                       # OR
+            20\d{2}                 # Finish with the year
+            |                       # OR
+            (?:\d+\.\d+\.\d+\S+\s*) # UTS version field Kernel Version
+            (?:\(\d+-\d+-\d+\))?    # Optional Build Date
+        )
+    )                               # End UTS version field
+$                                   # Line end anchor
+!x;
+
+my ( $running_version, $running_build ) = fetch_running_version();
+
+my $filename;
+my $kernel_image_source;
+
+unless ($kernel_image) {
+    logger("No kernel image filename specified");
+    ($filename, $kernel_image_source) = get_default_kernel_image_filename();
+} else {
+    logger("Kernel image supplied on command line: $kernel_image");
+    $filename = $kernel_image;
+    $kernel_image_source = 'optarg';
+}
+
+my ( $image_version, $image_build ) = fetch_image_version($filename);
+
+# Include real filename if target is a symlink
+$filename .= ' -> ' . readlink($filename) if ( -l $filename );
+
+
+if ( $running_version ne $image_version ) {
+    print status_prefix(1) . "Version mismatch between running ($running_version) and installed kernel ($image_version) at $filename (Source: $kernel_image_source)\n";
+    exit 1;
+}
+
+if ( $running_build ne $image_build ) {
+    print status_prefix(1) . "Build mismatch between $image_version kernels. Running ($running_build) and installed kernel ($image_build) at $filename (Source: $kernel_image_source)\n";
+    exit 1;
+}
+
+print status_prefix(0) . "Running Kernel ($running_version $running_build) matches installed $filename (Source: $kernel_image_source)\n";
+exit 0;
+
+
+########
+# Subs #
+########
+
+sub fetch_running_version {
+    logger("Fetching current running kernel version");
+
+    open( my $fh, '<', '/proc/version' ) or croak "Can't open /proc/version: $!";
+
+    my $version_line = <$fh>;
+    chomp($version_line);
+
+    close($fh) or croak "Can't close $filename: $!";
+
+    my ( $running_version, $running_build ) = $version_line =~ m/$versionRE/;
+
+    unless ($running_version) {
+       croak "Didn't get a version line out of /proc/version";
+    }
+
+    logger("    version: $running_version, build: $running_build");
+
+    return $running_version, $running_build;
+}
+
+sub fetch_image_version {
+    my ($filename) = @_;
+
+    unless ($filename) {
+        croak "No kernel image filename specified";
+    }
+
+    logger("Fetching version from local kernel image: $filename");
+
+    my $image_version;
+    my $image_build;
+
+    open( my $fh, '<', $filename ) or croak "Can't open $filename: $!";
+
+    my $chunksize = 4096;
+    my $string;
+    my $buf;
+
+    while ( $buf or read( $fh, $buf, $chunksize ) ) {
+        $string = '';
+
+        # Strip unprintable characters from beginning of buf
+        $buf =~ s/^([^[:print:]])//;
+
+        # Copy printable characters from beginning of buf to string
+        # Tries to read again if buf is empty, since the string could continue in the next chunk
+        # Stops when buf still contains stuff (which is non-printable) or read doesn't return anything
+
+        do {
+            $string .= $1 if $buf =~ s/^([[:print:]]+)//;
+        } until ( $buf || !read( $fh, $buf, $chunksize ) );
+
+        # 40 bytes should be a safe lower boundary for strings that could contain a kernel version
+
+        if ( length($string) >= 40 && $string =~ m/$versionRE/ ) {
+            $image_version = $1;
+            $image_build   = $2;
+            last;
+        }
+    }
+    close $fh or croak "Can't close $filename: $!";
+
+    croak "Didn't get a version line out of $filename" unless $image_version;
+
+    logger("\tversion: $image_version, build: $image_build");
+
+    return $image_version, $image_build;
+}
+
+sub get_default_kernel_image_filename {
+
+    my $filename;
+
+    logger("Looking for default kernel image");
+
+    # First, check if we can find a default entry in the grub config
+    unless ($no_grub) {
+        logger("\tSearching in grub config");
+        $filename = fetch_grub_default_kernel_image();
+
+        if ($filename) {
+            logger("\tFound kernel in grub config: $filename");
+            return ($filename, 'GRUB');
+        }
+    }
+
+    # See if either /vmlinuz or /boot/vmlinuz exist
+    unless ($no_vmlinuz) {
+        logger("\tLooking at default locations: /vmlinuz /boot/vmlinuz");
+        for my $prefix (qw( / /boot/)) {
+            if ( -e $prefix . 'vmlinuz' ) {
+                $filename = $prefix . 'vmlinuz';
+                logger("\tFound kernel image at $filename");
+                return ($filename, 'vmlinuz');
+            }
+        }
+    }
+
+    # If this wasn't successfull and heuristic mode is enabled, widen our search
+    unless ($no_heuristic) {
+        logger("\tUsing heuristic to find kernel image");
+        $filename = find_heuristic_kernel_image();
+        if ($filename) {
+            logger("\tFound kernel image at $filename");
+            return ($filename, 'heuristic');
+        }
+        else {
+            croak "Heuristic couldn't find a kernel image matching /vmlinuz* or /boot/vmlinuz*\n";
+        }
+    }
+
+    # If we're here, we've failed.
+    croak "Couldn't find a kernelimage. Please either supply one or use the other lookup modes\n";
+}
+
+
+# This function searches / and /boot and returns a
+# filename pointing to either
+#
+# *) the shortest vmlinuz symlink
+# *) the highest kernel version
+#
+# or undef on failure
+
+sub find_heuristic_kernel_image {
+    logger("Lookig for kernel image heuristically");
+
+    my $filename;
+
+    # We're looking for files and symlinks named vmlinuz at / and /boot
+    for my $directory (qw( / /boot/)) {
+        logger("\tLooking at ${directory}vmlinuz*");
+        my @entries = glob "$directory" . 'vmlinuz*';
+
+        my ( @symlinks, @files );
+
+        for my $entry (@entries) {
+            logger("\tAdding $entry to candidates");
+            push @symlinks, $entry if ( -l $entry );
+            # Perl's -f will return true even if it tests a symlink to a file...
+            push @files,    $entry if ( -f $entry && ! -l $entry );
+        }
+
+        # Return the _SHORTEST_ symlink
+        if (@symlinks) {
+            logger("\tFound symlinks: @symlinks");
+            $filename = ( sort { length($a) <=> length($b) } @symlinks )[0];
+            logger("\tUsing symlink $filename");
+            return $filename;
+        }
+
+        # If no suitable symlink exist - return the kernel with the "highest" version
+        if (@files) {
+            logger("\tFound kernel images: @files");
+            $filename = ( reverse sort { sort_versionstring() } @files )[0];
+            logger("\tUsing image $filename");
+            return $filename;
+        }
+    }
+    return;
+}
+
+sub fetch_grub_default_kernel_image {
+    my @candidates = qw( /boot/grub/grub.cfg /boot/grub/grub.conf );
+
+    logger("Looking for GRUB config files at @candidates");
+
+    my $path;
+    for my $candidate (@candidates) {
+        if ( -f $candidate && -r $candidate ) {
+            $path = $candidate;
+            last;
+        }
+    }
+
+    unless ($path) {
+        logger("\tDidn't find a grub config which exists and is readable");
+        return;
+    }
+
+    logger ("\tOpening GRUB config at $path");
+
+    open( my $fh, '<', $path ) or croak "Can't open $path: $!";
+    my @grub_config = <$fh>;
+    close($fh) or croak "Can't close $path: $!";
+
+    my @grub_entries;
+
+    # FIXME: This only works for "number"-based default entries
+    # Defaults to first entry if not present
+    my $grub_default = 0;
+
+    # e.g.
+    #   kernel /boot/vmlinuz-2.6.32-042stab088.4 ro root=...
+    #   linux   /boot/vmlinuz-2.6.32-5-openvz-amd64 root=...
+
+    for my $grub_line (@grub_config) {
+        if ( $grub_line =~ qr/^\s*(?:kernel|linux)\s+(\/[^\s]+)/ ) {
+            logger("\t\tFound image: $1");
+            push( @grub_entries, $1 );
+            next;
+        }
+
+        if ( $grub_line =~ qr/^\s*(?:set\s+)?default\s*=\s*"?(\d+)/ ) {
+            logger("\t\tFound 'default' stanza: $1");
+            $grub_default = $1;
+            next;
+        }
+    }
+
+    unless (@grub_entries) {
+        logger("\tCouldn't find a kernel in $path");
+        return;
+    }
+
+    my $grub_filename = $grub_entries[$grub_default];
+    logger("\tGRUB default kernel image: $grub_filename");
+    my ($grub_basename) = fileparse($grub_filename);
+
+    # Since we don't know in which partition/mount-point the image resides,
+    # try the most likely candidates
+
+    my @kernel_image_location_candidates = (
+        $grub_filename,
+        "/boot/$grub_basename",
+        "/$grub_basename"
+    );
+
+    for my $filename (@kernel_image_location_candidates) {
+        if ( -e $filename ) {
+            logger("\tImage exists at $filename");
+            return $filename;
+        }
+    }
+
+    logger("\tCouldn't find kernel image at @kernel_image_location_candidates");
+    return;
+}
+
+sub sort_versionstring {
+
+# Sorts given filenames from lowest to highest version number
+# If it fails to parse a given version number it puts the file before the smallest parseable file
+
+    my $filenameRE = qr/vmlinuz.*?(\d+\.\d+\.\d+)/;
+
+    my ($version_a) = $a =~ m/$filenameRE/;
+    my ($version_b) = $b =~ m/$filenameRE/;
+
+    return -1 unless ( defined $version_a );
+    return 1  unless ( defined $version_b );
+
+    my @elems_a = split /\./, $version_a;
+    my @elems_b = split /\./, $version_b;
+
+    croak "Uneven number of version parts in $a, $b\n"
+      unless ( @elems_a == @elems_b );
+
+    for my $elem ( 0 .. $#elems_a ) {
+        my $result = $elems_a[$elem] <=> $elems_b[$elem];
+
+        # We only want to return if one of the version part pairs differ from each other (i.e. "not 0")
+        return $result if ($result);
+    }
+
+    return 0;
+}
+
+
+sub status_prefix {
+    my ($rc) = @_;
+
+    my $mode;
+
+    if ($check_mk or $ENV{'MK_LIBDIR'}) {
+        $mode = 'check_mk';
+    } else {
+        $mode = 'nagios-compatible';
+    }
+
+    my %prefix = (
+        'check_mk' => [
+            '0 check_kernel_freshness - OK: ',
+            '1 check_kernel_freshness - ',
+        ],
+        'nagios-compatible' => [
+            'OK: ',
+            'WARNING: ',
+        ],
+    );
+
+    my $msg = $prefix{$mode}->[$rc];
+
+    unless ($msg) {
+        croak "Couldn't look up message prefix";
+    }
+
+    return $msg;
+}
+
+
+sub logger {
+    return unless $verbose;
+    my ($msg) = @_;
+
+    print "$msg\n";
+}
+
+__END__
+
+=head1 NAME
+
+check_kernel_freshness - A monitoring plugin to check if a given Linux system is running the installed kernel
+
+
+=head1 SYNOPSIS
+
+check_kernel_freshness [ -k --kernel-image filename ] [ --no-heuristic ] [ --no-grub ] [ --no-vmlinuz ]
+
+
+   Options:
+  -k, --kernel-image    Filename of the kernel image to check, optional. (default lookup order: grub, vmlinuz, heuristic)
+      --no-grub         Don't check GRUB config for default kernel image
+      --no-vmlinuz      Don't check for /vmlinuz and /boot/vmlinuz
+      --no-heuristic    Disable heuristic to search for the "best" kernel image
+      --check-mk        Enable check_mk compatible status output
+  -h, --help            Show documentation
+      --long-help       Show long documentation (needs perldoc)
+  -v, --version         Print version and exit
+      --verbose         Show verbose execution
+
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--kernel-image>
+
+Filename of the kernel image to check.
+
+B<Default>: Uses the modes outlined below to look for the most likely default kernel image
+
+
+=item B<--no-grub>
+
+Disables parsing of GRUB config files.
+
+By default, the files B</etc/grub/grub.cfg> and B</etc/grub/grub.conf> are tested for existance and the first file
+that is found and readable will be analyzed.
+
+
+=item B<--no-vmlinuz>
+
+Don't check if B</vmlinuz> or B</boot/vmlinuz> exists.
+
+By default, the files are tested for existance and the first file that is found and readable will be analyzed.
+
+
+=item B<--no-heuristic>
+
+Disables heuristic to search for a kernel image filename.
+
+When enabled, the plugin will search first / and then /boot for
+
+=over
+
+=item *) A symlink whose name starts with vmlinuz.
+
+If multiple symlinks are found, the symlink with the shortest name is used
+
+=item *) A file whose name starts with vmlinuz.
+
+If multiple files are found, the list is sorted by version strings and the filename with the highest version is used
+
+=back
+
+The first matching occurance is then used.
+
+=item B<--check-mk>
+
+Use B<check_mk> friendly status output. This mode is automatically activated when the B<MK_LIBDIR> environment
+variable exists.
+
+
+=back
+
+=head1 DESCRIPTION
+
+B<check_kernel_freshness> is a monitoring plugin which checks if the running kernel matches the version of the installed kernel.
+
+This is useful to see if a server needs to be rebooted after a kernel upgrade.
+
+=head2 Modus operandi
+
+This plugin compares kernel version and build timestamp gathered from /proc/version with a string containing similiar information in a given kernel image. If kernel version or timestamp shouldn't match, a warning is raised.
+
+=cut
