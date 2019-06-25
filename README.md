@@ -52,6 +52,21 @@ Example Playbook
            checkmkagent_plugins: [ 'mk_ceph' ]
 ```
 
+Update Notes
+------------
+
+Older versions of this role used the variable `checkmkagent_baseurl` instead `checkmkagent_host_url`.
+
+`mk_apt` was installed in `/usr/lib/check_mk_agent/plugins/60` instead of `/usr/lib/check_mk_agent/plugins/3600`.
+To delete the check on all hosts from the wrong location you could use ansible like this:
+
+```
+% ansible -i rfid.hosts all -m shell -a "ls -l /usr/lib/check_mk_agent/plugins/60/mk_apt"
+% ansible -i rfid.hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60/mk_apt"
+% ansible -i rfid.hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60"
+
+```
+
 License
 -------
 

@@ -8,9 +8,9 @@
     group: root
     mode: 0755
 
-- name: Ensure directory /usr/lib/check_mk_agent/plugins/60 exists
+- name: Ensure directory /usr/lib/check_mk_agent/plugins/3600 exists
   file:
-    path: '/usr/lib/check_mk_agent/plugins/60'
+    path: '/usr/lib/check_mk_agent/plugins/3600'
     state: 'directory'
     owner: root
     group: root
@@ -20,7 +20,7 @@
 - name: Deploy check-mk mk_apt plugin
   copy:
     src: 'check-mk/plugins/mk_apt'
-    dest: '/usr/lib/check_mk_agent/plugins/60/mk_apt'
+    dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
     owner: root
     group: root
     mode: 0755
