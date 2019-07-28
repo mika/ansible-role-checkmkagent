@@ -61,9 +61,9 @@ Older versions of this role used the variable `checkmkagent_baseurl` instead `ch
 To delete the check on all hosts from the wrong location you could use ansible like this:
 
 ```
-% ansible -i rfid.hosts all -m shell -a "ls -l /usr/lib/check_mk_agent/plugins/60/mk_apt"
-% ansible -i rfid.hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60/mk_apt"
-% ansible -i rfid.hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60"
+% ansible -i hosts all -m shell -a "ls -l /usr/lib/check_mk_agent/plugins/60/mk_apt"
+% ansible -i hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60/mk_apt"
+% ansible -i hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60"
 
 ```
 
