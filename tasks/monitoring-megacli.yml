@@ -1,9 +1,9 @@
 ---
-- name: Deploy custom check-mk config megacli.conf (TODO - still synpro.conf)
-  template: src=check-mk/custom/megacli.conf.j2 dest=/usr/lib/check_mk_agent/custom/synpro.conf owner=root group=root mode=0644
+- name: Deploy config megacli.conf for check_megacli checks
+  template: src=check-mk/megacli.cfg.j2 dest=/etc/check_mk/megacli.cfg owner=root group=root mode=0644
 
-# - name: Remove obsolte check-mk config synpro.conf
-#   file: path=/usr/lib/check_mk_agent/custom/synpro.conf state=absent
+- name: Remove obsolte check-mk config synpro.conf
+  file: path=/usr/lib/check_mk_agent/custom/synpro.conf state=absent
 
 - name: Deploy check-mk script check_megacli_battery
   copy: src=files/check-mk/local/check_megacli_battery dest=/usr/lib/check_mk_agent/local/check_megacli_battery owner=root group=root mode=0755
@@ -17,8 +17,8 @@
 - name: Deploy check-mk script check_megacli_smart
   copy: src=files/check-mk/local/check_megacli_smart dest=/usr/lib/check_mk_agent/local/check_megacli_smart owner=root group=root mode=0755
 
-- name: Deploy check-mk script check_num_disks (TODO - rename to check_megacli_num_disks)
-  copy: src=files/check-mk/local/check_num_disks dest=/usr/lib/check_mk_agent/local/check_num_disks owner=root group=root mode=075
+- name: Deploy check-mk script check_num_disks
+  copy: src=files/check-mk/local/check_megacli_num_disks dest=/usr/lib/check_mk_agent/local/check_megacli_num_disks owner=root group=root mode=0755
 
-# - name: Remove obsolete check-mk script check_num_disks
-#   file: path=/usr/lib/check_mk_agent/local/check_num_disks state=absent
+- name: Remove obsolete check-mk script check_num_disks
+  file: path=/usr/lib/check_mk_agent/local/check_num_disks state=absent

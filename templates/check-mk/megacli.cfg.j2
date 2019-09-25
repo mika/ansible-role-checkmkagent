@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+num_disk_groups={{ checkmkagent_megacli_num_disk_groups }}
+num_disks={{ checkmkagent_megacli_num_disks }}
+{% if checkmkagent_megacli_battery_adapter is defined %}
+battery_adapter={{ checkmkagent_megacli_battery_adapter }}
+{% endif %}

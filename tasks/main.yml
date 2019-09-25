@@ -9,5 +9,7 @@
 - include_tasks: checkmk-localchecks.yml
 - include_tasks: checkmk-plugins.yml
 # - include_tasks: monitoring-client.yml
-# - include_tasks: monitoring-megacli.yml
-#   when: (num_disks is defined and num_disks > 0) or (megacli_battery_adapter is defined and megacli_battery_adapter > 0)
+- include_tasks: monitoring-megacli.yml
+  when:
+    - checkmkagent_megacli_num_disks is defined
+    - checkmkagent_megacli_num_disk_groups is defined

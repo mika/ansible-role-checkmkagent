@@ -14,3 +14,12 @@ checkmkagent_version: '1.5.0p21'
 # See files/check-mk/plugins for the list of currently supported plugins
 # (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
 # checkmkagent_plugins: [ '' ]
+
+# The local checks check_megacli_* are not deployed automatically.
+# To do so the following role variables need to be defined:
+# checkmkagent_megacli_num_disks: 0
+# checkmkagent_megacli_num_disk_groups: 0
+
+# The following role variable does not need to be defined.
+# But if not defined the check does not expect a BBU on any adapter.
+# checkmkagent_megacli_battery_adapter: ALL

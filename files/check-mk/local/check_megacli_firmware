@@ -1,0 +1,38 @@
+#!/bin/bash
+# HEADER: managed by ansible, do NOT edit manually!
+
+export PATH='/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin'
+
+check_name="check_megacli_firmware"
+
+if ! [ -x "$(which megacli)" ] ; then
+  exit 0
+fi
+
+firmware_state=$(sudo megacli -CfgDsply -aALL -NoLog | grep '^Firmware state:')
+
+if [ -z "$firmware_state" ] ; then
+  echo "1 ${check_name} - no firmware disk states determined"
+  exit 0
+fi
+
+# determin disks which aren't ok
+if sudo megacli -CfgDsply -aALL -NoLog | grep '^Firmware state:' | grep -v 'Firmware state: Online, Spun Up' | grep -q '.' ; then
+  error=$(sudo megacli -CfgDsply -aALL -NoLog | grep -A10 'Firmware state: Failed' | grep 'Inquiry Data:' | xargs echo -n)
+
+  if [ -n "$error" ] ; then
+    # add multiline data
+    error="$error\\n$(sudo megacli -CfgDsply -aALL -NoLog | grep -e '^Firmware state:' -e '^Slot Number:' | sed 's/$/\\\\n/' | xargs echo -n)"
+  else
+    # not in state "failed" but "rebuilding"
+    error="disk probably in state 'Rebuild' -> $(sudo megacli -CfgDsply -aALL -NoLog | grep -A10 'Firmware state: Rebuild' | grep 'Inquiry Data:' | xargs echo -n)"
+    # add multiline data
+    error="$error\\n$(sudo megacli -CfgDsply -aALL -NoLog | grep -e '^Firmware state:' -e '^Slot Number:' | sed 's/$/\\\\n/' | xargs echo -n)"
+  fi
+
+  echo "2 ${check_name} - failed disk(s): $error"
+  exit 1
+else
+  num_disks=$(echo "$firmware_state" | wc -l)
+  echo "0 ${check_name} - all firmware states of all disks [$num_disks] OK"
+fi

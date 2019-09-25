@@ -11,21 +11,7 @@ N/A
 Role Variables
 --------------
 
-Taken from [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml):
-```yaml
-# Set the version of the Check_Mk server
-checkmkagent_version: '1.5.0p21'
-
-# The agent package can be found on the check_mk server,
-# the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
-# If not defined, the agent will not be installed.
-# checkmkagent_host_url: 'http://monitor01.example.com/mysite'
-
-# Some plugins should only be deployed if explicitly requested.
-# See files/check-mk/plugins for the list of currently supported plugins
-# (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
-# checkmkagent_plugins: [ '' ]
-```
+See: [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml)
 
 Local checks and plugins
 ------------------------

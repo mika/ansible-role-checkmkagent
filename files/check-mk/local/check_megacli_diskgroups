@@ -1,0 +1,67 @@
+#!/bin/sh
+# HEADER: managed by ansible, do NOT edit manually!
+
+export PATH='/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin'
+
+check_name="check_megacli_diskgroups"
+num_disk_groups_present=0
+
+if ! [ -x "$(which megacli)" ] ; then
+  exit 0
+fi
+
+# Config file must contain:
+# num_disk_groups=0
+
+if [ -e "$MK_CONFDIR/megacli.cfg" ]; then
+  . $MK_CONFDIR/megacli.cfg
+fi
+
+if [ -z "$num_disk_groups" ]; then
+  exit 0
+fi
+
+num_disk_groups_expected=$num_disk_groups
+adapters=$(sudo megacli -CfgDsply -aALL -NoLog | awk '/^Adapter:/ {print $2}')
+
+if [ -z "$adapters" ] ; then
+  echo "1 ${check_name} - no adapters present [see 'megacli -CfgDsply -aALL -NoLog']"
+  exit 0
+fi
+
+for adapter in $adapters ; do
+  num_disk_groups_adapter=$(sudo megacli -CfgDsply -a"${adapter}" -NoLog | awk -F: '/^Number of DISK GROUPS:/ {print $2}')
+
+  if [ -z "$num_disk_groups_adapter" ] ; then
+    echo "1 ${check_name} - disk groups on adapter $adapter could not be calculated [see 'megacli -CfgDsply -a$adapter -NoLog']"
+    exit 0
+  fi
+
+  if [ "$num_disk_groups_adapter" -eq 0 ] ; then
+    num_disk_groups_present=$((num_disk_groups_present+1))
+    [[ ! -z $output ]] && output="$output | "
+    output="${output}Adapter $adapter: no disk group"
+    continue
+  fi
+
+  STATUS=$(sudo megacli -CfgDsply -a"${adapter}" -NoLog | grep -A20 'DISK GROUP' | grep -e '^DISK GROUP' -e 'State' | xargs echo -n)
+
+  if [ -z "$STATUS" ] ; then
+    echo "1 ${check_name} - disk group status could not be determined on adapter $adapter [see 'megacli -CfgDsply -a$adapter -NoLog']"
+    exit 0
+  fi
+
+  # determin disk groups which aren't ok
+  if sudo megacli -CfgDsply -a"${adapter}" -NoLog | grep -A20 'DISK GROUP' | grep 'State' | grep -v 'State.*Optimal' | grep -q '.' ; then
+    echo "2 ${check_name} - $STATUS on adapter $adapter [see 'megacli -CfgDsply -a$adapter -NoLog']"
+    exit 1
+  else
+    [[ ! -z $output ]] && output="$output | "
+    output="${output}Adapter $adapter: $STATUS"
+  fi
+done
+
+[[ ! -z $output ]] && output="$output | "
+output="${output}$num_disk_groups_present disk group(s) found"
+
+echo "0 ${check_name} - $output"

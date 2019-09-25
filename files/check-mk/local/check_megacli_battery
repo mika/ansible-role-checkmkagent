@@ -1,0 +1,42 @@
+#!/bin/sh
+# HEADER: managed by ansible, do NOT edit manually!
+
+export PATH='/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin'
+
+check_name="check_megacli_battery"
+
+if ! [ -x "$(which megacli)" ] ; then
+  exit 0
+fi
+
+# Config file must contain:
+# battery_adapter=ALL or an adapter
+
+if [ -e "$MK_CONFDIR/megacli.cfg" ]; then
+  . $MK_CONFDIR/megacli.cfg
+fi
+
+# if unconfigured then default to all adapters
+if [ -z "$battery_adapter" ] ; then
+  exit 0
+fi
+
+battery_state=$(sudo megacli -AdpBbuCmd -GetBbuStatus -a"${battery_adapter}" -NoLog | awk -F: '/Battery State: / {print $2}')
+
+if [ -z "$battery_state" ] ; then
+  battery_error=$(sudo megacli -AdpBbuCmd -GetBbuStatus -a"${battery_adapter}" -NoLog | grep -A1 'FW error description' | tail -1)
+
+  echo "1 ${check_name} - battery status could not be determined (${battery_error}) [see 'megacli -AdpBbuCmd -GetBbuStatus -a${battery_adapter} -NoLog']"
+  exit 0
+fi
+
+case "$battery_state" in
+  *Optimal*)
+    echo "0 ${check_name} - battery state is Optimal"
+    exit 0
+    ;;
+  *)
+    echo "2 ${check_name} - broken battery: $battery_state"
+    exit 1
+    ;;
+esac
