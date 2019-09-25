@@ -4,15 +4,10 @@
   roles:
     - role: ansible-role-checkmkagent
 
-- name: Converge mk_ceph
+- name: Converge mk_ceph + megacli
   hosts: all
   roles:
     - role: ansible-role-checkmkagent
       checkmkagent_plugins: [ 'mk_ceph' ]
-
-- name: Converge megacli
-  hosts: all
-  roles:
-    - role: ansible-role-checkmkagent
       checkmkagent_megacli_num_disks: 4
       checkmkagent_megacli_num_disk_groups: 0

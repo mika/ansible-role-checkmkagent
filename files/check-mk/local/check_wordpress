@@ -1,0 +1,70 @@
+#!/bin/bash
+set -eu -o pipefail
+
+# no wordpress sites? don't report anything then
+if ! ls /srv/www/*/wordpress &>/dev/null ; then
+  exit 0
+fi
+
+current_version=$(curl -fsSL 'https://api.wordpress.org/core/version-check/1.7/' | jq -r '.offers[0].current')
+
+site_version='unknown'
+declare -A wp_problems
+declare -a wp_sites
+
+for site in /srv/www/*/wordpress ; do
+  wp_sites+=($site)
+  if ! [ -f "${site}/wp-includes/version.php" ] ; then
+    echo "2 check_wordpress - Couldn't access ${site}/wp-includes/version.php"
+    exit 1
+  else
+    site_version=$(awk '/^\$wp_version/ {print $3}' "${site}/wp-includes/version.php" | tr -d ";'")
+    if [ "$current_version" != "$site_version" ] ; then
+      wp_problems[$site]+=" currently installed version $site_version doesn't match latest upstream version $current_version;"
+    fi
+  fi
+
+  cd "$site"
+  unexpected_files=$(find . -maxdepth 1 -type f \
+                   \! -name .htaccess \
+                   \! -name index.php \
+                   \! -name license.txt \
+                   \! -name readme.html \
+                   \! -name wp-activate.php \
+                   \! -name wp-blog-header.php \
+                   \! -name wp-comments-post.php \
+                   \! -name wp-config-sample.php \
+                   \! -name wp-cron.php \
+                   \! -name wp-links-opml.php \
+                   \! -name wp-load.php \
+                   \! -name wp-login.php \
+                   \! -name wp-mail.php \
+                   \! -name wp-settings.php \
+                   \! -name wp-signup.php \
+                   \! -name wp-trackback.php \
+                   \! -name xmlrpc.php)
+  unexpected_directories=$(find . -maxdepth 1 -type d \
+                   \! -name wp-includes \
+                   \! -name wp-content \
+                   \! -name wp-admin \
+                   \! -name '.')
+
+  if echo "${unexpected_files:-}" | grep -q '.' ; then
+    wp_problems[$site]+=" unexpected files found: ${unexpected_files};"
+  fi
+
+  if echo "${unexpected_directories:-}" | grep -q '.' ; then
+    wp_problems[$site]+=" unexpected directories found: ${unexpected_directories};"
+  fi
+done
+
+declare -a message
+for site in ${!wp_problems[*]} ; do
+  message+=( "$site ( ${wp_problems[$site]} )" )
+done
+
+if [ -n "${message:-}" ] ; then
+  echo "1 check_wordpress - Problems found with wordpress site(s) ${message[@]}"
+else
+  echo "0 check_wordpress - No known problems found with wordpress site(s) ${wp_sites[@]}"
+fi

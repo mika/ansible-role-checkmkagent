@@ -13,18 +13,14 @@
     group: root
     mode: 0755
 
-- name: Deploy check-mk script check_kernel_freshness
+- name: Deploy check-mk local checks
   copy:
-    src: 'check-mk/local/check_kernel_freshness'
-    dest: '/usr/lib/check_mk_agent/local/check_kernel_freshness'
+    src: 'check-mk/local/{{ item }}'
+    dest: '/usr/lib/check_mk_agent/local/{{ item }}'
     owner: root
     group: root
     mode: 0755
-
-- name: Deploy check-mk script check_systemd
-  copy:
-    src: 'check-mk/local/check_systemd'
-    dest: '/usr/lib/check_mk_agent/local/check_systemd'
-    owner: root
-    group: root
-    mode: 0755
+  with_items:
+    - check_kernel_freshness
+    - check_systemd
+    - check_wordpress
