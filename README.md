@@ -11,10 +11,10 @@ N/A
 Role Variables
 --------------
 
-Take from `defaults/main.yml`:
+Taken from [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml):
 ```yaml
 # Set the version of the Check_Mk server
-# checkmkagent_version: '1.5.0p14'
+checkmkagent_version: '1.5.0p21'
 
 # The agent package can be found on the check_mk server,
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
@@ -45,13 +45,12 @@ Example Playbook
 
 ```
     - hosts: site
-      var:
+      vars:
         checkmkagent_host_url: 'http://monitor01.example.com/mysite'
       roles:
          - { role: jkirk.checkmkagent }
 
     - hosts: ceph
-      var:
       roles:
          - role: jkirk.checkmkagent
            checkmkagent_host_url: 'http://monitor01.example.com/mysite'

@@ -3,7 +3,7 @@
 #
 
 # Set the version of the Check_Mk server
-# checkmkagent_version: '1.5.0p21'
+checkmkagent_version: '1.5.0p21'
 
 # The agent package can be found on the check_mk server,
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
