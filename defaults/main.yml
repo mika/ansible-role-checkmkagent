@@ -9,3 +9,8 @@
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
 # If not defined, the agent will not be installed.
 # checkmkagent_host_url: 'http://monitor01.example.com/mysite'
+
+# Some plugins should only be deployed if explicitly requested.
+# See files/check-mk/plugins for the list of currently supported plugins
+# (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
+# checkmkagent_plugins: [ '' ]

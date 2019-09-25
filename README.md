@@ -1,7 +1,7 @@
 checkmkagent
 ============
 
-A simple role to deploy the Check_Mk Agent.
+A simple role to deploy the Check_Mk Agent with some custom local checks and plugins.
 
 Requirements
 ------------
@@ -20,7 +20,20 @@ Take from `defaults/main.yml`:
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
 # If not defined, the agent will not be installed.
 # checkmkagent_host_url: 'http://monitor01.example.com/mysite'
+
+# Some plugins should only be deployed if explicitly requested.
+# See files/check-mk/plugins for the list of currently supported plugins
+# (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
+# checkmkagent_plugins: [ '' ]
 ```
+
+Local checks and plugins
+------------------------
+
+See:
+
+* [files/check-mk/local](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/local)
+* [files/check-mk/plugins](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/plugins)
 
 Dependencies
 ------------
@@ -36,13 +49,6 @@ Example Playbook
         checkmkagent_host_url: 'http://monitor01.example.com/mysite'
       roles:
          - { role: jkirk.checkmkagent }
-
-    - hosts: debian
-      var:
-      roles:
-         - role: jkirk.checkmkagent
-           checkmkagent_host_url: 'http://monitor01.example.com/mysite'
-           checkmkagent_plugins: [ 'mk_apt' ]
 
     - hosts: ceph
       var:

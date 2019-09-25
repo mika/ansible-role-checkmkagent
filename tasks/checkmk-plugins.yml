@@ -7,6 +7,7 @@
     owner: root
     group: root
     mode: 0755
+  when: ansible_facts['distribution'] == "Debian"
 
 - name: Ensure directory /usr/lib/check_mk_agent/plugins/3600 exists
   file:
@@ -25,3 +26,42 @@
     group: root
     mode: 0755
   when: ansible_facts['distribution'] == "Debian"
+
+- name: Deploy check-mk mk_ceph plugin
+  copy:
+    src: 'check-mk/plugins/mk_ceph'
+    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
+    owner: root
+    group: root
+    mode: 0755
+  when: ansible_facts['distribution'] == "Debian" and checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+
+- name: Ensure directory /etc/check_mk exists
+  file:
+    path: '/etc/check_mk'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
+  when: ansible_facts['distribution'] == "Debian"
+
+- name: Deploy check-mk mk_ceph plugin config file
+  copy:
+    src: 'check-mk/ceph.cfg'
+    dest: '/etc/check_mk/ceph.cfg'
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_facts['distribution'] == "Debian" and checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+
+- name: Remove check-mk mk_ceph plugin config file
+  file:
+    path: '/etc/check_mk/ceph.cfg'
+    state: absent
+  when: ansible_facts['distribution'] == "Debian" and ((checkmkagent_plugins is not defined) or ('mk_ceph' not in checkmkagent_plugins))
+
+- name: Remove check-mk mk_ceph plugin
+  file:
+    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
+    state: absent
+  when: ansible_facts['distribution'] == "Debian" and ((checkmkagent_plugins is not defined) or ('mk_ceph' not in checkmkagent_plugins))

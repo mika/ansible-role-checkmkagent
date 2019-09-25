@@ -3,3 +3,9 @@
   hosts: all
   roles:
     - role: ansible-role-checkmkagent
+
+- name: Converge mk_ceph
+  hosts: all
+  roles:
+    - role: ansible-role-checkmkagent
+      checkmkagent_plugins: [ 'mk_ceph' ]
