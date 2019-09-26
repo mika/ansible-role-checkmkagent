@@ -39,7 +39,7 @@ for adapter in $adapters ; do
 
   if [ "$num_disk_groups_adapter" -eq 0 ] ; then
     num_disk_groups_present=$((num_disk_groups_present+1))
-    [[ ! -z $output ]] && output="$output | "
+    [[ ! -z $output ]] && output="${output}, "
     output="${output}Adapter $adapter: no disk group"
     continue
   fi
@@ -56,12 +56,20 @@ for adapter in $adapters ; do
     echo "2 ${check_name} - $STATUS on adapter $adapter [see 'megacli -CfgDsply -a$adapter -NoLog']"
     exit 1
   else
-    [[ ! -z $output ]] && output="$output | "
+    [[ ! -z $output ]] && output="${output}, "
     output="${output}Adapter $adapter: $STATUS"
   fi
 done
 
-[[ ! -z $output ]] && output="$output | "
+if [ "$num_disk_groups_present" -lt "$num_disk_groups_expected" ] ; then
+  echo "2 ${check_name} - missing disk group(s): expected $num_disk_groups_expected - present disk groups: $num_disk_groups_present"
+  exit 1
+elif [ "$num_disk_groups_present" -gt "$num_disk_groups_expected" ] ; then
+  echo "2 ${check_name} - too many disk groups: expected $num_disk_groups_expected - present disk groups: $num_disk_groups_present"
+  exit 1
+fi
+
+[[ ! -z $output ]] && output="${output}, "
 output="${output}$num_disk_groups_present disk group(s) found"
 
 echo "0 ${check_name} - $output"
