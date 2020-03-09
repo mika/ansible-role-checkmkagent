@@ -19,8 +19,8 @@
   when: ansible_facts['distribution'] == "Debian"
 
 - name: Deploy check-mk mk_apt plugin
-  copy:
-    src: 'check-mk/plugins/mk_apt'
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
     dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
     owner: root
     group: root
@@ -28,8 +28,8 @@
   when: ansible_facts['distribution'] == "Debian"
 
 - name: Deploy check-mk mk_ceph plugin
-  copy:
-    src: 'check-mk/plugins/mk_ceph'
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
     dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
     owner: root
     group: root
