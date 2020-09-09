@@ -18,23 +18,81 @@
     mode: 0755
   when: ansible_facts['distribution'] == "Debian"
 
-- name: Deploy check-mk mk_apt plugin
+- name: Deploy check-mk mk_apt plugin (Bug ansible/ansible#65687)
   get_url:
     url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
     dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
     owner: root
     group: root
     mode: 0755
-  when: ansible_facts['distribution'] == "Debian"
+  when:
+    - ansible_facts['distribution'] == "Debian"
+    - not ansible_check_mode
 
-- name: Deploy check-mk mk_ceph plugin
+- name: Deploy check-mk mk_ceph plugin (Bug ansible/ansible#65687)
   get_url:
     url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
     dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
     owner: root
     group: root
     mode: 0755
-  when: ansible_facts['distribution'] == "Debian" and checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+  when:
+    - ansible_facts['distribution'] == "Debian"
+    - checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+    - not ansible_check_mode
+
+## Workaround to detect changes in check_mode
+
+- name: Download check-mk mk_apt plugin
+  become: false
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
+    dest: '/tmp/'
+  register: get_url_mk_ceph
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_check_mode
+
+- name: Deploy mk_apt plugin
+  become: false
+  copy:
+    src: '/tmp/mk_apt'
+    dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when:
+    - ansible_facts['distribution'] == "Debian"
+    - ansible_check_mode
+
+- name: Download check-mk mk_ceph plugin
+  become: false
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
+    dest: '/tmp/'
+  register: get_url_mk_ceph
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_check_mode
+
+- name: Deploy mk_ceph plugin
+  become: false
+  copy:
+    src: '/tmp/mk_ceph'
+    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when:
+    - ansible_facts['distribution'] == "Debian"
+    - checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+    - ansible_check_mode
+
+## End: Workaround to detect changes in check_mode
 
 - name: Ensure directory /etc/check_mk exists
   file:
