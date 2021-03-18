@@ -1,33 +1,70 @@
 ---
 
-- name: Ensure directory /usr/lib/check_mk_agent/plugins exists
+- name: Set mk_apt plugin base path
+  set_fact:
+    mk_apt_path: "/usr/lib/check_mk_agent/plugins"
+
+- name: Ensure directory {{ mk_apt_path }} exists
   file:
-    path: '/usr/lib/check_mk_agent/plugins'
+    path: '{{ mk_apt_path }}'
     state: 'directory'
     owner: root
     group: root
     mode: 0755
   when: ansible_facts['distribution'] == "Debian"
 
-- name: Ensure directory /usr/lib/check_mk_agent/plugins/3600 exists
-  file:
-    path: '/usr/lib/check_mk_agent/plugins/3600'
-    state: 'directory'
-    owner: root
-    group: root
-    mode: 0755
-  when: ansible_facts['distribution'] == "Debian"
+- name: Set mk_apt plugin async path
+  set_fact:
+    mk_apt_path: "/usr/lib/check_mk_agent/plugins/{{ checkmkagent_mk_apt_delay }}"
+  when:
+    - ansible_facts['distribution'] == "Debian"
+    - checkmkagent_mk_apt_delay is defined
+    - checkmkagent_mk_apt_delay > 0
 
-- name: Deploy check-mk mk_apt plugin (Bug ansible/ansible#65687)
-  get_url:
-    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
-    dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
+- name: Ensure directory {{ mk_apt_path }} exists
+  file:
+    path: '/usr/lib/check_mk_agent/plugins/{{ checkmkagent_mk_apt_delay }}'
+    state: 'directory'
     owner: root
     group: root
     mode: 0755
   when:
     - ansible_facts['distribution'] == "Debian"
-    - not ansible_check_mode
+    - checkmkagent_mk_apt_delay is defined
+    - checkmkagent_mk_apt_delay > 0
+
+- name: Download check-mk mk_apt plugin
+  become: false
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
+    dest: '/tmp/'
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_facts['distribution'] == "Debian"
+
+- name: Set mk_apt plugin DO_UPDATE configuration
+  become: false
+  ansible.builtin.lineinfile:
+    path: '/tmp/mk_apt'
+    regexp: '^DO_UPDATE='
+    line: "DO_UPDATE={{ checkmkagent_mk_apt_update | default('no') }}"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_facts['distribution'] == "Debian"
+
+- name: Deploy mk_apt plugin
+  copy:
+    src: '/tmp/mk_apt'
+    dest: "{{ mk_apt_path }}/mk_apt"
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when:
+    - ansible_facts['distribution'] == "Debian"
 
 - name: Deploy check-mk mk_ceph plugin (Bug ansible/ansible#65687)
   get_url:
@@ -43,36 +80,11 @@
 
 ## Workaround to detect changes in check_mode
 
-- name: Download check-mk mk_apt plugin
-  become: false
-  get_url:
-    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
-    dest: '/tmp/'
-  register: get_url_mk_ceph
-  delegate_to: localhost
-  changed_when: false
-  check_mode: false
-  when:
-    - ansible_check_mode
-
-- name: Deploy mk_apt plugin
-  become: false
-  copy:
-    src: '/tmp/mk_apt'
-    dest: '/usr/lib/check_mk_agent/plugins/3600/mk_apt'
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-  when:
-    - ansible_facts['distribution'] == "Debian"
-    - ansible_check_mode
-
 - name: Download check-mk mk_ceph plugin
   become: false
   get_url:
     url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
     dest: '/tmp/'
-  register: get_url_mk_ceph
   delegate_to: localhost
   changed_when: false
   check_mode: false

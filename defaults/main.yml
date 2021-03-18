@@ -3,7 +3,7 @@
 #
 
 # Set the version of the Check_Mk server
-checkmkagent_version: '1.5.0p21'
+checkmkagent_version: '1.6.0p22'
 
 # The agent package can be found on the check_mk server,
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
@@ -14,6 +14,15 @@ checkmkagent_version: '1.5.0p21'
 # See files/check-mk/plugins for the list of currently supported plugins
 # (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
 # checkmkagent_plugins: [ '' ]
+
+# The agent plugin mk_apt can be configured to run `apt update` before checking for apt updates.
+# (Note, that this is not needed nowadays as there exists a systemd timer apt-daily.timer
+# which performs `apt updates` twice a day.)
+# checkmkagent_mk_apt_update: yes|no(default)
+#
+# The make the agent plugin mk_apt async, a delay has to be set.
+# This is usually only needed when 'checkmkagent_mk_apt_update' is set to 'yes'.
+# checkmkagent_mk_apt_delay: 3600
 
 # The local checks check_megacli_* are not deployed automatically.
 # To do so the following role variables need to be defined:
