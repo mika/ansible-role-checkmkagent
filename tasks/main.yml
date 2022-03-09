@@ -1,4 +1,48 @@
 ---
+# Role: checkmkagent
+#
+# Usage (without RAID controller):
+#
+#   roles:
+#     - checkmkagent
+#
+# Usage (with LSI RAID controller (megacli):
+#
+#   roles:
+#     - { role: checkmkagent, num_disks: 4, megacli_battery_adapter: 1 }
+#
+# This role downloads the check_mk_agent (if checkmkagent_host_url is given)
+# and deploys the check_mk_agent and generic custom checks to all systems which
+# should be monitored by the check_mk monitoring server.
+#
+# If `checkmkagent_host_url` is not given,
+# `check-mk-agent_{{  checkmkagent_version }}-1_all.deb` needs to be in
+# `files/check-mk/` and checkmk agent plugins can not be deployed.
+#
+# A group [monitoring] or [monitoring-clients] should be defined in the hosts
+# file and a plybook site-monitoring.yml could look like this:
+#
+# - name: Setup site wide monitoring configuration
+#   hosts: monitoring-clients !megacli
+#   become: yes
+#   vars:
+#     checkmkagent_version: '2.0.0p19'
+#     checkmkagent_host_url: 'https://monitoring.example.com/mysite'
+#     checkmkagent_ip_allow: 'monitoring.example.com'
+#   roles:
+#     - checkmkagent
+#
+# For hosts with LSI additional checks for disk and battery state are added.
+# A group [megacli] should be defined in the hosts file and site-monitoring.yml should look like this:
+#
+# - name: Setup monitoring configuration for systems with megacli
+#   hosts: megacli
+#   become: yes
+#     checkmkagent_version: '2.0.0p19'
+#     checkmkagent_host_url: 'https://monitoring.example.com/mysite'
+#   roles:
+#     - { role: checkmkagent, checkmkagent_ip_allow: 192.168.100.230, num_disks: 4, megacli_battery_adapter: 1 }
+
 # tasks file for ansible-role-checkmkagent
 
 - name: Download and install check-mk-agent package
@@ -6,9 +50,12 @@
     deb: "{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
   when: checkmkagent_host_url is defined
 
+- name: Deploy local check-mk-agent package
+  include_tasks: deploy-checkmkagent.yml
+  when: checkmkagent_host_url is not defined
+
 - include_tasks: checkmk-localchecks.yml
 - include_tasks: checkmk-plugins.yml
-# - include_tasks: monitoring-client.yml
 - include_tasks: monitoring-megacli.yml
   when:
     - checkmkagent_megacli_num_disks is defined

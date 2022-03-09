@@ -1,0 +1,24 @@
+---
+- name: Ensure directory /usr/lib/check_mk_agent exists
+  file:
+    path: '/usr/lib/check_mk_agent'
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+# NOTE: check-mk-agent_{{ checkmkagent_version }}-1_all.deb is site specific and does NOT reside in
+# `roles-generic/files`. It should reside in `files/check-mk` customer specific ansible repository
+- name: Deploy check-mk-agent package
+  copy:
+    src: 'files/check-mk/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+    dest: '/usr/lib/check_mk_agent/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Deploy and install check-mk-agent package
+  apt:
+    deb: "/usr/lib/check_mk_agent/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
+  when:
+    - not ansible_check_mode

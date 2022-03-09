@@ -1,7 +1,7 @@
 checkmkagent
 ============
 
-A simple role to deploy the Check_Mk Agent with some custom local checks and plugins.
+A simple role to deploy the checkmk agent with some custom local checks and agent plugins.
 
 Requirements
 ------------
@@ -13,13 +13,18 @@ Role Variables
 
 See: [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml)
 
-Local checks and plugins
-------------------------
+Local checks and agent plugins
+------------------------------
 
-See:
+For currently available local checks, see: [files/check-mk/local](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/local).
 
-* [files/check-mk/local](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/local)
-* [files/check-mk/plugins](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/plugins)
+Currently the following checkmk agent plugins are supported:
+
+```
+checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
+```
+
+For general available agent plugins see the agent plugins folder of your checkmk monitoring server (i.e. `https://monitoring.example.com/mysite/check_mk/agents/plugins/`).
 
 Dependencies
 ------------
@@ -54,7 +59,7 @@ To delete the check on all hosts from the wrong location you could use ansible l
 ```
 % ansible -i hosts all -m shell -a "ls -l /usr/lib/check_mk_agent/plugins/60/mk_apt"
 % ansible -i hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60/mk_apt"
-% ansible -i hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60"
+% ansible -i hosts all -b -m shell -a "rmdir /usr/lib/check_mk_agent/plugins/60"
 
 ```
 

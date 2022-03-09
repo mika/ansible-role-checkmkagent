@@ -1,8 +1,10 @@
 ---
 galaxy_info:
   author: Darshaka Pathirana
-  description: A simple role to deploy the Check_Mk Agent.
+  description: A simple role to deploy the checkmk agent, local checks and agent plugins.
   company: SynPro Solutions
+  namespace: jkirk
+  role_name: checkmkagent
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value

@@ -1,24 +1,27 @@
 ---
-- name: Deploy config megacli.conf for check_megacli checks
-  template: src=check-mk/megacli.cfg.j2 dest=/etc/check_mk/megacli.cfg owner=root group=root mode=0644
+- name: Deploy checkmk local megacli checks
+  copy:
+    src: 'check-mk/local/{{ item }}'
+    dest: '/usr/lib/check_mk_agent/local/{{ item }}'
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - check_megacli_battery
+    - check_megacli_diskgroups
+    - check_megacli_firmware
+    - check_megacli_smart
+    - check_megacli_num_disks
 
-- name: Remove obsolte check-mk config synpro.conf
-  file: path=/usr/lib/check_mk_agent/custom/synpro.conf state=absent
+- name: Remove obsolete checkmk script check_num_disks
+  file:
+    path: '/usr/lib/check_mk_agent/local/check_num_disks'
+    state: absent
 
-- name: Deploy check-mk script check_megacli_battery
-  copy: src=files/check-mk/local/check_megacli_battery dest=/usr/lib/check_mk_agent/local/check_megacli_battery owner=root group=root mode=0755
-
-- name: Deploy check-mk script check_megacli_diskgroups
-  copy: src=files/check-mk/local/check_megacli_diskgroups dest=/usr/lib/check_mk_agent/local/check_megacli_diskgroups owner=root group=root mode=0755
-
-- name: Deploy check-mk script check_megacli_firmware
-  copy: src=files/check-mk/local/check_megacli_firmware dest=/usr/lib/check_mk_agent/local/check_megacli_firmware owner=root group=root mode=0755
-
-- name: Deploy check-mk script check_megacli_smart
-  copy: src=files/check-mk/local/check_megacli_smart dest=/usr/lib/check_mk_agent/local/check_megacli_smart owner=root group=root mode=0755
-
-- name: Deploy check-mk script check_num_disks
-  copy: src=files/check-mk/local/check_megacli_num_disks dest=/usr/lib/check_mk_agent/local/check_megacli_num_disks owner=root group=root mode=0755
-
-- name: Remove obsolete check-mk script check_num_disks
-  file: path=/usr/lib/check_mk_agent/local/check_num_disks state=absent
+- name: Deploy checkmk local check check_megacli config file
+  template:
+    src: 'check-mk/megacli.cfg.j2'
+    dest: '/etc/check_mk/megacli.cfg'
+    owner: root
+    group: root
+    mode: 0644

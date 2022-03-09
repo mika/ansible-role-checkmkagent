@@ -1,8 +1,18 @@
 ---
+- name: Ensure directory {{ check_mk_plugins_path }} exists
+  file:
+    path: '{{ check_mk_plugins_path }}'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
 
-- name: Set mk_apt plugin base path
+- name: Set mk_apt plugin async path
   set_fact:
-    mk_apt_path: "/usr/lib/check_mk_agent/plugins"
+    mk_apt_path: "{{ check_mk_plugins_path }}/{{ checkmkagent_mk_apt_delay }}"
+  when:
+    - checkmkagent_mk_apt_delay is defined
+    - checkmkagent_mk_apt_delay > 0
 
 - name: Ensure directory {{ mk_apt_path }} exists
   file:
@@ -11,29 +21,21 @@
     owner: root
     group: root
     mode: 0755
-  when: ansible_facts['distribution'] == "Debian"
-
-- name: Set mk_apt plugin async path
-  set_fact:
-    mk_apt_path: "/usr/lib/check_mk_agent/plugins/{{ checkmkagent_mk_apt_delay }}"
   when:
-    - ansible_facts['distribution'] == "Debian"
     - checkmkagent_mk_apt_delay is defined
     - checkmkagent_mk_apt_delay > 0
 
-- name: Ensure directory {{ mk_apt_path }} exists
+- name: Ensure checkmk configuration directory /etc/check_mk exists
   file:
-    path: '/usr/lib/check_mk_agent/plugins/{{ checkmkagent_mk_apt_delay }}'
+    path: '/etc/check_mk'
     state: 'directory'
     owner: root
     group: root
     mode: 0755
-  when:
-    - ansible_facts['distribution'] == "Debian"
-    - checkmkagent_mk_apt_delay is defined
-    - checkmkagent_mk_apt_delay > 0
 
-- name: Download check-mk mk_apt plugin
+### checkmk agent plugin: mk_apt
+
+- name: Download checkmk agent plugin mk_apt
   become: false
   get_url:
     url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_apt"
@@ -41,10 +43,8 @@
   delegate_to: localhost
   changed_when: false
   check_mode: false
-  when:
-    - ansible_facts['distribution'] == "Debian"
 
-- name: Set mk_apt plugin DO_UPDATE configuration
+- name: Set checkmk agent plugin mk_apt DO_UPDATE configuration
   become: false
   ansible.builtin.lineinfile:
     path: '/tmp/mk_apt'
@@ -53,85 +53,81 @@
   delegate_to: localhost
   changed_when: false
   check_mode: false
-  when:
-    - ansible_facts['distribution'] == "Debian"
 
-- name: Deploy mk_apt plugin
+- name: Deploy checkmk agent plugin mk_apt
   copy:
     src: '/tmp/mk_apt'
     dest: "{{ mk_apt_path }}/mk_apt"
     owner: 'root'
     group: 'root'
     mode: 0755
-  when:
-    - ansible_facts['distribution'] == "Debian"
 
-- name: Deploy check-mk mk_ceph plugin (Bug ansible/ansible#65687)
-  get_url:
-    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
-    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
-    owner: root
-    group: root
-    mode: 0755
-  when:
-    - ansible_facts['distribution'] == "Debian"
-    - checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
-    - not ansible_check_mode
+### checkmk agent plugins
 
-## Workaround to detect changes in check_mode
+- name: "Deploy checkmk agent plugins"
+  include_tasks: checkmk-deploy-plugins.yml
+  loop: "{{ checkmkagent_plugins_enabled | select('in', checkmkagent_plugins_available }}"
+  when: checkmkagent_host_url is defined
 
-- name: Download check-mk mk_ceph plugin
-  become: false
-  get_url:
-    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/mk_ceph"
-    dest: '/tmp/'
-  delegate_to: localhost
-  changed_when: false
-  check_mode: false
-  when:
-    - ansible_check_mode
-
-- name: Deploy mk_ceph plugin
-  become: false
-  copy:
-    src: '/tmp/mk_ceph'
-    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-  when:
-    - ansible_facts['distribution'] == "Debian"
-    - checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
-    - ansible_check_mode
-
-## End: Workaround to detect changes in check_mode
-
-- name: Ensure directory /etc/check_mk exists
+- name: Remove checkmk agent plugin {{ item }}
   file:
-    path: '/etc/check_mk'
-    state: 'directory'
-    owner: root
-    group: root
-    mode: 0755
-  when: ansible_facts['distribution'] == "Debian"
+    dest: '{{ check_mk_plugins_path }}/{{ item }}'
+    state: absent
+  loop: "{{ checkmkagent_plugins_availale | difference(checkmkagent_plugins_enabled) }}"
 
-- name: Deploy check-mk mk_ceph plugin config file
-  copy:
-    src: 'check-mk/ceph.cfg'
+### checkmk agent plugin: mk_ceph
+
+- name: Deploy checkmk agent plugin mk_ceph configuration file
+  template:
+    src: 'check-mk/ceph.cfg.j2'
     dest: '/etc/check_mk/ceph.cfg'
     owner: root
     group: root
     mode: 0644
-  when: ansible_facts['distribution'] == "Debian" and checkmkagent_plugins is defined and 'mk_ceph' in checkmkagent_plugins
+  when:
+    - checkmkagent_plugins_enabled | intersect( ['mk_ceph'] )
 
-- name: Remove check-mk mk_ceph plugin config file
+- name: Remove checkmk agent plugin mk_ceph config file
   file:
     path: '/etc/check_mk/ceph.cfg'
     state: absent
-  when: ansible_facts['distribution'] == "Debian" and ((checkmkagent_plugins is not defined) or ('mk_ceph' not in checkmkagent_plugins))
+  when:
+    - not checkmkagent_plugins_enabled | intersect( ['mk_ceph'] )
 
-- name: Remove check-mk mk_ceph plugin
+### checkmk agent plugin: mk_logwatch
+
+- name: Deploy check-mk agent plugin mk_logwatch configuration file
+  template:
+    src: 'check-mk/logwatch.cfg.j2'
+    dest: '/etc/check_mk/logwatch.cfg'
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - checkmkagent_plugins_enabled | intersect( ['mk_logwatch'] )
+
+- name: Remove checkmk agent plugin mk_logwatch configuration file
   file:
-    dest: '/usr/lib/check_mk_agent/plugins/mk_ceph'
+    dest: '/etc/check_mk/logwatch.cfg'
     state: absent
-  when: ansible_facts['distribution'] == "Debian" and ((checkmkagent_plugins is not defined) or ('mk_ceph' not in checkmkagent_plugins))
+  when:
+    - not checkmkagent_plugins_enabled | intersect( ['mk_logwatch'] )
+
+### checkmk agent plugin: mk_mysql
+
+- name: Deploy check-mk agent plugin mk_mysql configuration file
+  template:
+    src: 'check-mk/mysql.cfg.j2'
+    dest: '/etc/check_mk/mysql.cfg'
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    - checkmkagent_plugins_enabled | intersect( ['mk_mysql'] )
+
+- name: Remove checkmk agent plugin mk_mysql configuration file
+  file:
+    dest: '/etc/check_mk/mysql.cfg'
+    state: absent
+  when:
+    - not checkmkagent_plugins_enabled | intersect( ['mk_mysql'] )

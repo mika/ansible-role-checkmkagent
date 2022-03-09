@@ -1,0 +1,36 @@
+---
+- name: Download + deploy checkmk agent plugin {{ item }}
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/{{ item }}"
+    dest: '{{ checkmkagent_plugins_path }}/{{ item }}'
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - not ansible_check_mode
+
+## Workaround to detect changes when in check_mode because of bug ansible/ansible#65687:
+
+- name: Download checkmk agent plugin {{ item }} (Workaround for bug ansible/ansible#65687)
+  become: false
+  get_url:
+    url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/{{ item }}"
+    dest: '/tmp/{{ item }}'
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_check_mode
+
+- name: Deploy checkmk agent plugin {{ item }} (Workaround for bug ansible/ansible#65687)
+  become: false
+  copy:
+    src: '/tmp/{{ item }}'
+    dest: '{{ checkmkagent_plugins_path }}/{{ item }}'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when:
+    - ansible_check_mode
+
+## End: Workaround to detect changes in check_mode

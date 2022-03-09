@@ -3,17 +3,24 @@
 #
 
 # Set the version of the Check_Mk server
-checkmkagent_version: '1.6.0p22'
+checkmkagent_version: '2.0.0p19'
 
 # The agent package can be found on the check_mk server,
 # the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
 # If not defined, the agent will not be installed.
 # checkmkagent_host_url: 'http://monitor01.example.com/mysite'
 
+# Checkmk agent plugins will be deployed in the given path.
+# This usually should not be changed.
+checkmkagent_plugins_path: "/usr/lib/check_mk_agent/plugins"
+
+# Currently the following checkmk agent plugins are supported:
+# (Don't override this variable!)
+checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
+
 # Some plugins should only be deployed if explicitly requested.
-# See files/check-mk/plugins for the list of currently supported plugins
-# (The Agent Plugin mk_apt will be deployed automatically if the OS 'debian' is detected)
-# checkmkagent_plugins: [ '' ]
+# The checkmk agent plugin mk_apt will be deployed always (on Debian hosts).
+checkmkagent_plugins_enabled: [ '' ]
 
 # The agent plugin mk_apt can be configured to run `apt update` before checking for apt updates.
 # (Note, that this is not needed nowadays as there exists a systemd timer apt-daily.timer

@@ -1,0 +1,96 @@
+#!/bin/bash
+set -eu -o pipefail
+
+# no wordpress sites? don't report anything then
+if ! ls /srv/www/*/wordpress &>/dev/null && ! ls /srv/www/*/wp-admin &>/dev/null ; then
+  exit 0
+fi
+
+check_name='check_wordpress_files'
+if [ -r "${MK_CONFDIR:-/etc/check_mk}/${check_name}" ] ; then
+  . "${MK_CONFDIR:-/etc/check_mk}/${check_name}"
+fi
+
+if [[ -n "${IGNORE_FILES[*]}" ]] ; then
+  file_exceptions=""
+  for file in "${IGNORE_FILES[@]}" ; do
+    file_exceptions="${file_exceptions} ! -name ${file}"
+  done
+fi
+
+if [[ -n "${IGNORE_DIRECTORIES[*]}" ]] ; then
+  directory_exceptions=""
+  for dir in "${IGNORE_DIRECTORIES[@]}" ; do
+    directory_exceptions="${directory_exceptions} ! -name ${dir}"
+  done
+fi
+
+declare -A wp_problems
+declare -a wp_sites
+
+shopt -s nullglob
+for site in /srv/www/*/wordpress /srv/www/*/wp-admin ; do
+  # remove /wp-admin from path
+  site=${site/%\/wp-admin/}
+
+  # sanity check if site is really a directory
+  [[ ! -d "${site}" ]] && continue
+  # ignore wordpress backup sites (where the path contains "backup" (case insensitiv) or "_$DATE_" or ends with "_$DATE")
+  [[ ${site^^} = *BACKUP* ]] && continue
+  [[ ${site} =~ _[0-9]{8}$ ]] && continue
+  [[ ${site} =~ _[0-9]{8}_ ]] && continue
+
+  # ignore symlinks to avoid multiple checks of the same wordpress instance
+  [[ -L "${site}" ]] && continue
+
+  wp_sites+=($site)
+
+  cd "$site"
+  unexpected_files=$(find . -maxdepth 1 -type f \
+                   \! -name .htaccess \
+                   \! -name favicon.ico \
+                   \! -name index.php \
+                   \! -name license.txt \
+                   \! -name liesmich.html \
+                   \! -name readme.html \
+                   \! -name robots.txt \
+                   \! -name wp-activate.php \
+                   \! -name wp-blog-header.php \
+                   \! -name wp-comments-post.php \
+                   \! -name wp-config-sample.php \
+                   \! -name wp-cron.php \
+                   \! -name wp-links-opml.php \
+                   \! -name wp-load.php \
+                   \! -name wp-login.php \
+                   \! -name wp-mail.php \
+                   \! -name wp-settings.php \
+                   \! -name wp-signup.php \
+                   \! -name wp-trackback.php \
+                   \! -name xmlrpc.php \
+                   ${file_exceptions:-} | xargs echo -n)
+  unexpected_directories=$(find . -maxdepth 1 -type d \
+                   \! -name wp-includes \
+                   \! -name wp-content \
+                   \! -name wp-admin \
+                   \! -name '.' \
+                   ${directory_exceptions:-} | xargs echo -n)
+
+  if echo "${unexpected_files:-}" | grep -q '.' ; then
+    wp_problems[$site]+=" unexpected files found: ${unexpected_files};"
+  fi
+
+  if echo "${unexpected_directories:-}" | grep -q '.' ; then
+    wp_problems[$site]+=" unexpected directories found: ${unexpected_directories};"
+  fi
+done
+
+declare -a message
+for site in ${!wp_problems[*]} ; do
+  message+=( "$site ( ${wp_problems[$site]} )" )
+done
+
+if [ -n "${message:-}" ] ; then
+  echo "2 ${check_name} - Problems found with ${#wp_sites[@]} wordpress site(s) ${message[@]}"
+else
+  echo "0 ${check_name} - No known problems found with ${#wp_sites[@]} wordpress site(s) ${wp_sites[@]}"
+fi
