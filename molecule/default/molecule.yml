@@ -3,16 +3,16 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
 platforms:
   - name: instance
-    image: debian:9
+    image: geerlingguy/docker-debian10-ansible
+    pre_build_image: true
+    container_default_behavior: no_defaults
+  - name: debian_11
+    image: geerlingguy/docker-debian11-ansible
+    pre_build_image: true
+    container_default_behavior: no_defaults
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
 verifier:
-  name: testinfra
-  lint:
-    name: flake8
+  name: ansible
