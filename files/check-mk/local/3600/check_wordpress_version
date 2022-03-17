@@ -17,6 +17,7 @@ declare -a wp_sites
 shopt -s nullglob
 for site in /srv/www/*/wordpress /srv/www/*/wp-admin ; do
   # remove /wp-admin from path
+  # i.e. site=/srv/www/${DOMAIN}/wordpress
   site=${site/%\/wp-admin/}
 
   # sanity check if site is really a directory
@@ -29,25 +30,25 @@ for site in /srv/www/*/wordpress /srv/www/*/wp-admin ; do
   # ignore symlinks to avoid multiple checks of the same wordpress instance
   [[ -L "${site}" ]] && continue
 
-  wp_sites+=($site)
+  wp_sites+=("${site}")
   if ! [ -f "${site}/wp-includes/version.php" ] ; then
     echo "2 ${check_name} - Couldn't access ${site}/wp-includes/version.php"
     exit 1
   else
     site_version=$(awk '/^\$wp_version/ {print $3}' "${site}/wp-includes/version.php" | tr -d ";'")
     if [ "$current_version" != "$site_version" ] ; then
-      wp_problems[$site]+=" currently installed version $site_version doesn't match latest upstream version $current_version;"
+      wp_problems[$site]+="$site_version != $current_version"
     fi
   fi
 done
 
 declare -a message
 for site in ${!wp_problems[*]} ; do
-  message+=( "$site ( ${wp_problems[$site]} )" )
+  message+=( "$site (${wp_problems[$site]});" )
 done
 
 if [ -n "${message:-}" ] ; then
-  echo "1 ${check_name} - Problems found with ${#wp_sites[@]} wordpress site(s) ${message[@]}"
+  echo "1 ${check_name} - Problems found with ${#wp_sites[@]} wordpress site(s)" "${message[@]}"
 else
-  echo "0 ${check_name} - No known problems found with ${#wp_sites[@]} wordpress site(s) ${wp_sites[@]}"
+  echo "0 ${check_name} - No known problems found with ${#wp_sites[@]} wordpress site(s)" "${wp_sites[@]}"
 fi

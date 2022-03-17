@@ -2,7 +2,7 @@ checkmkagent
 ============
 
 ![Lint Code Base](https://github.com/jkirk/ansible-role-base/actions/workflows/superlinter.yml/badge.svg)
-![Ansible Molecule](https://github.com/jkirk/ansible-role-base/actions/workflows/molecule.yml/badge.svg
+![Ansible Molecule](https://github.com/jkirk/ansible-role-base/actions/workflows/molecule.yml/badge.svg)
 
 A simple role to deploy the checkmk agent with some custom local checks and agent plugins.
 
