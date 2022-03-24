@@ -1,15 +1,19 @@
 ---
-- name: Ensure directory {{ check_mk_plugins_path }} exists
+- name: Ensure directory {{ checkmkagent_plugins_path }} exists
   file:
-    path: '{{ check_mk_plugins_path }}'
+    path: '{{ checkmkagent_plugins_path }}'
     state: 'directory'
     owner: root
     group: root
     mode: 0755
 
+- name: Set mk_apt plugin path
+  set_fact:
+    mk_apt_path: "{{ checkmkagent_plugins_path }}"
+
 - name: Set mk_apt plugin async path
   set_fact:
-    mk_apt_path: "{{ check_mk_plugins_path }}/{{ checkmkagent_mk_apt_delay }}"
+    mk_apt_path: "{{ checkmkagent_plugins_path }}/{{ checkmkagent_mk_apt_delay }}"
   when:
     - checkmkagent_mk_apt_delay is defined
     - checkmkagent_mk_apt_delay > 0
@@ -21,9 +25,6 @@
     owner: root
     group: root
     mode: 0755
-  when:
-    - checkmkagent_mk_apt_delay is defined
-    - checkmkagent_mk_apt_delay > 0
 
 - name: Ensure checkmk configuration directory /etc/check_mk exists
   file:
@@ -66,14 +67,14 @@
 
 - name: "Deploy checkmk agent plugins"
   include_tasks: checkmk-deploy-plugins.yml
-  loop: "{{ checkmkagent_plugins_enabled | select('in', checkmkagent_plugins_available }}"
+  loop: "{{ checkmkagent_plugins_enabled | select('in', checkmkagent_plugins_available) }}"
   when: checkmkagent_host_url is defined
 
 - name: Remove checkmk agent plugin {{ item }}
   file:
-    dest: '{{ check_mk_plugins_path }}/{{ item }}'
+    dest: '{{ checkmkagent_plugins_path }}/{{ item }}'
     state: absent
-  loop: "{{ checkmkagent_plugins_availale | difference(checkmkagent_plugins_enabled) }}"
+  loop: "{{ checkmkagent_plugins_available | difference(checkmkagent_plugins_enabled) }}"
 
 ### checkmk agent plugin: mk_ceph
 

@@ -50,12 +50,9 @@
   when: result.stat.exists
 
 - name: Remove obsolete checkmk local checks
-  copy:
-    src: 'check-mk/local/{{ item }}'
+  file:
     dest: '/usr/lib/check_mk_agent/local/{{ item }}'
-    owner: root
-    group: root
-    mode: 0755
+    state: absent
   with_items:
     - check_systemd
     - check_wordpress
