@@ -105,14 +105,14 @@
     group: root
     mode: 0644
   when:
-    - checkmkagent_plugins_enabled | intersect( ['mk_logwatch'] )
+    - checkmkagent_plugins_enabled | intersect( ['mk_logwatch.py'] )
 
 - name: Remove checkmk agent plugin mk_logwatch configuration file
   file:
     dest: '/etc/check_mk/logwatch.cfg'
     state: absent
   when:
-    - not checkmkagent_plugins_enabled | intersect( ['mk_logwatch'] )
+    - not checkmkagent_plugins_enabled | intersect( ['mk_logwatch.py'] )
 
 ### checkmk agent plugin: mk_mysql
 
