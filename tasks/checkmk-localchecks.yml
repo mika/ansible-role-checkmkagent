@@ -15,6 +15,14 @@
     group: root
     mode: 0755
 
+- name: Ensure directory /usr/lib/check_mk_agent/local/3600 exists
+  file:
+    path: '/usr/lib/check_mk_agent/local/3600'
+    state: 'directory'
+    owner: root
+    group: root
+    mode: 0755
+
 - name: Deploy checkmk local checks
   copy:
     src: 'check-mk/local/{{ item }}'
