@@ -63,6 +63,14 @@
     group: 'root'
     mode: 0755
 
+- name: Deploy mk_apt_hook for usage with checkmk agent plugin mk_apt
+  copy:
+    src: 'check-mk/mk_apt_hook'
+    dest: '/etc/apt/apt.conf.d/98mk-apt'
+    mode: 0644
+    owner: root
+    group: root
+
 ### checkmk agent plugins
 
 - name: "Deploy checkmk agent plugins"
