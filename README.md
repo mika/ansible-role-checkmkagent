@@ -23,7 +23,7 @@ For currently available local checks, see: [files/check-mk/local](https://github
 
 Currently the following checkmk agent plugins are supported:
 
-```
+```yaml
 checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
 ```
 
@@ -37,7 +37,7 @@ N/A
 Example Playbook
 ----------------
 
-```
+```yaml
     - hosts: site
       vars:
         checkmkagent_host_url: 'http://monitor01.example.com/mysite'
@@ -59,7 +59,7 @@ Older versions of this role used the variable `checkmkagent_baseurl` instead `ch
 `mk_apt` was installed in `/usr/lib/check_mk_agent/plugins/60` instead of `/usr/lib/check_mk_agent/plugins/3600`.
 To delete the check on all hosts from the wrong location you could use ansible like this:
 
-```
+```console
 % ansible -i hosts all -m shell -a "ls -l /usr/lib/check_mk_agent/plugins/60/mk_apt"
 % ansible -i hosts all -b -m shell -a "rm /usr/lib/check_mk_agent/plugins/60/mk_apt"
 % ansible -i hosts all -b -m shell -a "rmdir /usr/lib/check_mk_agent/plugins/60"
@@ -74,4 +74,4 @@ MIT
 Author Information
 ------------------
 
-Darshaka Pathirana - https://synpro.solutions
+Darshaka Pathirana - <https://synpro.solutions>
