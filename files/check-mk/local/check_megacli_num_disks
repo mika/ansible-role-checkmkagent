@@ -14,7 +14,7 @@ fi
 # num_disks=[number of disks to be expected]
 
 if [ -e "$MK_CONFDIR/megacli.cfg" ]; then
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   . "$MK_CONFDIR/megacli.cfg"
 fi
 

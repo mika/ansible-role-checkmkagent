@@ -14,7 +14,7 @@ fi
 # num_disk_groups=0
 
 if [ -e "$MK_CONFDIR/megacli.cfg" ]; then
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   . "$MK_CONFDIR/megacli.cfg"
 fi
 

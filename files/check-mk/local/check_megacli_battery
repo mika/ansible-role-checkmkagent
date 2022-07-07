@@ -13,7 +13,7 @@ fi
 # battery_adapter=ALL or an adapter
 
 if [ -e "$MK_CONFDIR/megacli.cfg" ]; then
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   . "$MK_CONFDIR/megacli.cfg"
 fi
 
