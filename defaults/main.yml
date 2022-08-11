@@ -39,3 +39,9 @@ checkmkagent_plugins_enabled: [ '' ]
 # The following role variable does not need to be defined.
 # But if not defined the check does not expect a BBU on any adapter.
 # checkmkagent_megacli_battery_adapter: ALL
+
+# To check a storagebox, the storagebox number needs to be defined (as a host variable)
+# Username and password should be defined via ansible vault.
+# checkmkagent_storagebox_number:
+# checkmkagent_storagebox_username:
+# checkmkagent_storagebox_password:

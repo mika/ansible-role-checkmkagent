@@ -1,0 +1,16 @@
+---
+- name: Deploy checkmk local storagebox check
+  copy:
+    src: 'check-mk/local/check_storagebox'
+    dest: '/usr/lib/check_mk_agent/local/300/check_storagebox_{{ checkmkagent_storagebox_number }}'
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Deploy checkmk local storagebox check config file
+  template:
+    src: 'check-mk/check_storagebox.j2'
+    dest: '/etc/check_mk/check_storagebox_{{ checkmkagent_storagebox_number }}'
+    owner: root
+    group: root
+    mode: 0640
