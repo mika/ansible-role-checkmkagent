@@ -60,3 +60,8 @@
   when:
     - checkmkagent_megacli_num_disks is defined
     - checkmkagent_megacli_num_disk_groups is defined
+- include_tasks: monitoring-storagebox.yml
+  when:
+    - checkmkagent_storagebox_number is defined
+    - checkmkagent_storagebox_username is defined
+    - checkmkagent_storagebox_password is defined
