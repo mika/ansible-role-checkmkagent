@@ -25,8 +25,9 @@
  C device-mapper: thin:.*no free space
  C Error: (.*)
 
-"/var/log/auth.log"
- W sshd.*Corrupted MAC on input
+# Causes too many false positives
+#"/var/log/auth.log"
+# W sshd.*Corrupted MAC on input
 
 "/var/log/syslog" "/var/log/kern.log"
  I registered panic notifier
