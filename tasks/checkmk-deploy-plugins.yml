@@ -2,7 +2,7 @@
 - name: Download + deploy checkmk agent plugin {{ item }}
   get_url:
     url: "{{ checkmkagent_host_url }}/check_mk/agents/plugins/{{ item }}"
-    dest: '{{ checkmkagent_plugins_path }}/{{ item }}'
+    dest: '{{ checkmkagent_plugins_path }}'
     owner: root
     group: root
     mode: 0755
