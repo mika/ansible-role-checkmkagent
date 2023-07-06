@@ -3,7 +3,6 @@
 - name: Install tools and utilities needed for local checks
   apt:
     name:
-      - jq                          # needed for check_wordpress
       - libregexp-common-time-perl  # needed for check_kernel_freshness
     state: present
 
@@ -32,30 +31,6 @@
     mode: 0755
   with_items:
     - check_kernel_freshness
-    - check_wordpress_files
-
-- name: Deploy check-mk local checks check_wordpress_version
-  copy:
-    src: 'check-mk/local/3600/check_wordpress_version'
-    dest: '/usr/lib/check_mk_agent/local/3600/check_wordpress_version'
-    owner: root
-    group: root
-    mode: 0755
-
-- name: Check for check_wordpress_files host-specific configuration
-  become: false
-  delegate_to: localhost
-  stat:
-    path: "files/{{ inventory_hostname }}/check_mk/check_wordpress_files"
-  register: result
-- name: Deploy check_wordpress_files host-specific configuration
-  copy:
-    src: "files/{{ inventory_hostname }}/check_mk/check_wordpress_files"
-    dest: "/etc/check_mk/check_wordpress_files"
-    owner: root
-    group: root
-    mode: 0444
-  when: result.stat.exists
 
 - name: Remove obsolete checkmk local checks
   file:
@@ -63,4 +38,3 @@
     state: absent
   with_items:
     - check_systemd
-    - check_wordpress
