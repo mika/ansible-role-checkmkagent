@@ -1,8 +1,7 @@
 checkmkagent
 ============
 
-![Lint Code Base](https://github.com/jkirk/ansible-role-base/actions/workflows/superlinter.yml/badge.svg)
-![Ansible Molecule](https://github.com/jkirk/ansible-role-base/actions/workflows/molecule.yml/badge.svg)
+![Lint Code Base](https://github.com/jkirk/ansible-role-checkmkagent/actions/workflows/superlinter.yml/badge.svg)
 
 A simple role to deploy the checkmk agent with some custom local checks and agent plugins.
 
@@ -16,10 +15,30 @@ Role Variables
 
 See: [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml)
 
-Local checks and agent plugins
-------------------------------
+Local checks
+------------
 
-For currently available local checks, see: [files/check-mk/local](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/files/check-mk/local).
+Currently the following local checks are deployed default:
+
+* `check_kernel_freshness`
+* `check_storagebox`
+
+The local megacli checks are not deployed automatically:
+
+* `check_megacli_battery`
+* `check_megacli_diskgroups`
+* `check_megacli_firmware`
+* `check_megacli_num_disks`
+* `check_megacli_smart`
+
+To do so the following role variables need to be defined:
+
+* `checkmkagent_megacli_num_disks`
+* `checkmkagent_megacli_num_disk_groups`
+* (optionall and agent pluginsy) `checkmkagent_megacli_battery_adapter`
+
+Agent plugins
+-------------
 
 Currently the following checkmk agent plugins are supported:
 
