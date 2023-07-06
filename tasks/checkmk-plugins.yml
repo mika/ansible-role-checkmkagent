@@ -70,6 +70,16 @@
     mode: 0644
     owner: root
     group: root
+  when:
+    - checkmkagent_mk_apt_delay is defined
+    - checkmkagent_mk_apt_delay > 0
+
+- name: Remove mk_apt_hook
+  file:
+    path: '/etc/apt/apt.conf.d/98mk-apt'
+    state: absent
+  when:
+    - checkmkagent_mk_apt_delay is undefined or checkmkagent_mk_apt_delay = 0
 
 ### checkmk agent plugins
 
