@@ -35,6 +35,7 @@ run: ## Quick How-To
 	@echo "Run test sequence commands:"
 	@echo "molecule create"
 	@echo "molecule list"
+	@echo "molecule prepare"
 	@echo "molecule converge"
 	@echo "molecule login"
 	@echo "molecule destroy"
@@ -43,4 +44,3 @@ run: ## Quick How-To
 	@echo "molecule test"
 	@echo
 	@echo "Read: https://molecule.readthedocs.io/en/stable/getting-started.html"
-

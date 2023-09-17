@@ -1,4 +1,5 @@
 ansible
-ansible-lint
-molecule[docker,lint]
-yamllint
+molecule
+molecule-plugins[docker]
+pre-commit
+ruamel.yaml

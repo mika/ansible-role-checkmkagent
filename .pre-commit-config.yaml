@@ -1,0 +1,18 @@
+---
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+# There are currently way too many warnings and errors.
+# We need to handle them first, before adding the ansible-lint hook.
+#  - repo: https://github.com/ansible-community/ansible-lint.git
+#    rev: v6.19.0
+#    hooks:
+#      - id: ansible-lint
+fail_fast: true

@@ -5,10 +5,15 @@
 # Set the version of the Check_Mk server
 checkmkagent_version: '2.0.0p30'
 
-# The agent package can be found on the check_mk server,
-# the deb file will be downloaded from '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
-# If not defined, the agent will not be installed.
+# If `checkmkagent_host_url` is given the check-mk-agent package is
+# downloaded and deployed from the checkmk server: '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
+# If the variable is not defined, the checkmk agent pluings will not be
+# installed and the check-mk-agent package needs to be in `files/check-mk/`.
 # checkmkagent_host_url: 'http://monitor01.example.com/mysite'
+
+# To skip the installation of the check-mk-agent package from `files/check-mk/` set the following variable:
+# This is actually only useful for the ansible molecule tests.
+# checkmkagent_skip_install: true | false(default)
 
 # Checkmk agent plugins will be deployed in the given path.
 # This usually should not be changed.

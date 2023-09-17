@@ -44,6 +44,7 @@
   delegate_to: localhost
   changed_when: false
   check_mode: false
+  when: checkmkagent_host_url is defined
 
 - name: Set checkmk agent plugin mk_apt DO_UPDATE configuration
   become: false
@@ -79,7 +80,7 @@
     path: '/etc/apt/apt.conf.d/98mk-apt'
     state: absent
   when:
-    - checkmkagent_mk_apt_delay is undefined or checkmkagent_mk_apt_delay = 0
+    - checkmkagent_mk_apt_delay is undefined or checkmkagent_mk_apt_delay == 0
 
 ### checkmk agent plugins
 
