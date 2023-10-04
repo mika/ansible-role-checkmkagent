@@ -3,7 +3,24 @@
 #
 
 # Set the version of the Check_Mk server
-checkmkagent_version: '2.0.0p30'
+checkmkagent_version: '2.2.0p9'
+
+# Force xinetd integration
+# If a host has xinetd installed and its xinetd binary is available, then
+# checkmk uses its integration. Only if systemd's systemctl is available and
+# the xinetd binary isn't available, then systemd integration gets enabled and
+# used.
+# We use systemd integration by default.
+# checkmkagent_service_xinetd: true | false(default)
+
+# Register checkmk agent for TLS
+# To register the checkmk agent for TLS checkmkagent 2.2.0 or higher needs to
+# be installed and `checkmkagent_site`, `checkmkagent_user`,
+# `checkmkagent_auth` + `checkmkagent_hostname` needs to be set.
+# checkmkagent_site: 'mysite'
+# checkmkagent_user: 'automation'
+# checkmkagent_auth: [ should be set in vault ]
+# checkmkagent_hostname: 'monitor01.example.com'
 
 # If `checkmkagent_host_url` is given the check-mk-agent package is
 # downloaded and deployed from the checkmk server: '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
@@ -11,9 +28,13 @@ checkmkagent_version: '2.0.0p30'
 # installed and the check-mk-agent package needs to be in `files/check-mk/`.
 # checkmkagent_host_url: 'http://monitor01.example.com/mysite'
 
-# To skip the installation of the check-mk-agent package from `files/check-mk/` set the following variable:
+# To skip the installation of the check-mk-agent package from `files/check-mk/`, set the following variable:
 # This is actually only useful for the ansible molecule tests.
 # checkmkagent_skip_install: true | false(default)
+
+# To skip enabling and starting of systemd service units, set the following variable:
+# This is actually only useful for the ansible molecule tests.
+# checkmkagent_skip_systemd: true | false(default)
 
 # Checkmk agent plugins will be deployed in the given path.
 # This usually should not be changed.

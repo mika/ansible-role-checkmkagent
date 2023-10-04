@@ -1,2 +1,12 @@
 ---
 # handlers file for ansible-role-checkmkagent
+
+- name: xinetd restart
+  ansible.builtin.service:
+    name: xinetd
+    state: restarted
+
+- name: cmk-agent-ctl-daemon restart
+  ansible.builtin.service:
+    name: cmk-agent-ctl-daemon
+    state: restarted

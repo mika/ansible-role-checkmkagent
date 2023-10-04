@@ -16,12 +16,11 @@
     owner: root
     group: root
     mode: 0644
-  when:
-    - checkmkagent_skip_install is undefined or not checkmkagent_skip_install
+  when: not checkmkagent_skip_install|default(false)
 
 - name: Deploy and install check-mk-agent package
   apt:
     deb: "/usr/lib/check_mk_agent/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
   when:
     - not ansible_check_mode
-    - checkmkagent_skip_install is undefined or not checkmkagent_skip_install
+    - not checkmkagent_skip_install|default(false)

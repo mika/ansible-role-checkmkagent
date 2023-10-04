@@ -54,6 +54,9 @@
   include_tasks: deploy-checkmkagent.yml
   when: checkmkagent_host_url is not defined
 
+- include_tasks: checkmkagent-systemd.yml
+  when: not checkmkagent_service_xinetd|default(false)
+
 - include_tasks: checkmk-localchecks.yml
 - include_tasks: checkmk-plugins.yml
 - include_tasks: monitoring-megacli.yml

@@ -1,0 +1,36 @@
+---
+- name: Ensure /etc/xinetd.d/check_mk is absent
+  file:
+    path: /etc/xinetd.d/check_mk
+    state: absent
+  notify: xinetd restart
+
+- name: Flush handlers
+  meta: flush_handlers
+
+- name: Register checkmk agent for TLS
+  ansible.builtin.shell: |
+    cmk-agent-ctl register \
+      --server {{ checkmkagent_hostname }} \
+      --site {{ checkmkagent_site }} \
+      --user {{ checkmkagent_user }} \
+      --hostname {{ ansible_fqdn }} \
+      --password {{ checkmkagent_auth }} \
+      --trust-cert
+  when:
+    - checkmkagent_site is defined and checkmkagent_site | length
+    - checkmkagent_user is defined and checkmkagent_user | length
+    - checkmkagent_auth is defined and checkmkagent_auth | length
+    - checkmkagent_hostname is defined and checkmkagent_hostname | length
+  notify: cmk-agent-ctl-daemon restart
+
+- name: Ensure checkmk agent services are enabled + started
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - check-mk-agent-async.service
+    - check-mk-agent.socket
+    - cmk-agent-ctl-daemon.service
+  when: not checkmkagent_skip_systemd|default(false)
