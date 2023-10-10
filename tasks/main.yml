@@ -45,6 +45,9 @@
 
 # tasks file for ansible-role-checkmkagent
 
+- include_tasks: checkmkagent-disable-xinetd.yml
+  when: not checkmkagent_service_xinetd|default(false)
+
 - name: Download and install check-mk-agent package
   apt:
     deb: "{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb"
