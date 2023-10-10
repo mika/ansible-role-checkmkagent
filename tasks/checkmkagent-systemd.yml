@@ -15,6 +15,17 @@
     - checkmkagent_hostname is defined and checkmkagent_hostname | length
   notify: cmk-agent-ctl-daemon restart
 
+- name: Ensure legacy checkmk agent services are stopped  + disabled
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - check_mk.socket
+    - check_mk-async.service
+  when: not checkmkagent_skip_systemd|default(false)
+  register: checkmk_legacy_services_stopped
+
 - name: Ensure checkmk agent services are enabled + started
   service:
     name: "{{ item }}"
@@ -25,3 +36,13 @@
     - check-mk-agent.socket
     - cmk-agent-ctl-daemon.service
   when: not checkmkagent_skip_systemd|default(false)
+
+- name: Restart checkmk agent controller daemon (if xinetd was restarted and/or legacy services were stopped)
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - cmk-agent-ctl-daemon.service
+  when:
+    - not checkmkagent_skip_systemd|default(false)
+    - checkmk_legacy_services_stopped.changed|default(false) or xinetd_restarted.changed|default(false)
