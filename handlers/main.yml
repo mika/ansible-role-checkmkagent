@@ -5,6 +5,8 @@
   ansible.builtin.service:
     name: xinetd
     state: restarted
+  register: xinetd_restarted
+  when: xinetd_check is succeeded
 
 - name: cmk-agent-ctl-daemon restart
   ansible.builtin.service:

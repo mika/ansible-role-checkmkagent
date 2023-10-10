@@ -1,16 +1,22 @@
 ---
+- name: Check if xinetd is installed
+  command: dpkg-query -l xinetd
+  register: xinetd_check
+  changed_when: false
+  check_mode: false
+  ignore_errors: true
+
 - name: Ensure /etc/xinetd.d/check_mk is absent
   file:
     path: /etc/xinetd.d/check_mk
     state: absent
-  register: checkmk_xinetd
   notify: xinetd restart
 
 - name: Flush handlers
   meta: flush_handlers
 
-- name: Ensure check-mk-agent port 6556 is closed
+- name: Ensure check-mk-agent port 6556 is closed (after xinetd restart)
   wait_for:
     port: 6556
     state: stopped
-  when: checkmk_xinetd.changed
+  when: xinetd_restarted.changed|default(false)
