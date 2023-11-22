@@ -1,4 +1,10 @@
 ---
+- name: Check checkmk agent registration
+  shell: 'cmk-agent-ctl status | grep -q "Legacy mode: enabled"'
+  register: cmk_agent_ctl_registered
+  changed_when: false
+  ignore_errors: true
+
 - name: Register checkmk agent for TLS
   ansible.builtin.shell: |
     cmk-agent-ctl register \
@@ -13,6 +19,7 @@
     - checkmkagent_user is defined and checkmkagent_user | length
     - checkmkagent_auth is defined and checkmkagent_auth | length
     - checkmkagent_hostname is defined and checkmkagent_hostname | length
+    - cmk_agent_ctl_registered.rc == 0
   notify: cmk-agent-ctl-daemon restart
 
 - name: Ensure legacy checkmk agent services are stopped  + disabled
