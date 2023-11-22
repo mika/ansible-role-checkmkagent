@@ -1,5 +1,2 @@
-ansible
 molecule
-molecule-plugins[docker]
-pre-commit
-ruamel.yaml
+molecule-plugins[podman]

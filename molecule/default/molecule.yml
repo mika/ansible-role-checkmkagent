@@ -2,10 +2,10 @@
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: podman
 platforms:
   - name: instance
-    image: geerlingguy/docker-${MOLECULE_DISTRO:-debian12}-ansible:latest
+    image: docker.io/geerlingguy/docker-${MOLECULE_DISTRO:-debian12}-ansible:latest
     pre_build_image: true
 provisioner:
   name: ansible
