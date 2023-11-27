@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  roles:
+    - role: jkirk.checkmkagent
+      checkmkagent_version: 2.0.0p29
+      checkmkagent_service_xinetd: true
