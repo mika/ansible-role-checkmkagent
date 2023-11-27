@@ -1,7 +1,7 @@
 ---
 - name: Check checkmk agent registration
   shell: 'cmk-agent-ctl status | grep -q "Legacy mode: enabled"'
-  register: cmk_agent_ctl_registered
+  register: cmk_agent_ctl_legacy_mode
   changed_when: false
   ignore_errors: true
 
@@ -19,7 +19,7 @@
     - checkmkagent_user is defined and checkmkagent_user | length
     - checkmkagent_auth is defined and checkmkagent_auth | length
     - checkmkagent_hostname is defined and checkmkagent_hostname | length
-    - cmk_agent_ctl_registered.rc == 0
+    - cmk_agent_ctl_legacy_mode.rc == 0
   notify: cmk-agent-ctl-daemon restart
 
 - name: Ensure legacy checkmk agent services are stopped  + disabled
@@ -32,6 +32,7 @@
     - check_mk-async.service
   when: not checkmkagent_skip_systemd|default(false)
   register: checkmk_legacy_services_stopped
+  ignore_errors: true
 
 - name: Ensure checkmk agent services are enabled + started
   service:
