@@ -55,6 +55,7 @@
   delegate_to: localhost
   changed_when: false
   check_mode: false
+  when: checkmkagent_host_url is defined
 
 - name: Deploy checkmk agent plugin mk_apt
   copy:
@@ -63,6 +64,7 @@
     owner: 'root'
     group: 'root'
     mode: 0755
+  when: checkmkagent_host_url is defined
 
 - name: Deploy mk_apt_hook for usage with checkmk agent plugin mk_apt
   copy:
