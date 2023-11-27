@@ -9,6 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        exclude: molecule/checkmk-agent-v2.2/files/check-mk/check-mk-agent_2.2.0p9-1_all.deb
 # There are currently way too many warnings and errors.
 # We need to handle them first, before adding the ansible-lint hook.
 #  - repo: https://github.com/ansible-community/ansible-lint.git

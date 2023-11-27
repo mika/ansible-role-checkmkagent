@@ -1,7 +1,0 @@
----
-- name: Converge
-  hosts: all
-  roles:
-    - role: jkirk.checkmkagent
-      checkmkagent_skip_install: true
-      checkmkagent_skip_systemd: true
