@@ -70,10 +70,23 @@ Example Playbook
            checkmkagent_plugins: [ 'mk_ceph' ]
 ```
 
-Update Notes
-------------
+Update / Migration Notes
+------------------------
 
-Older versions of this role used the variable `checkmkagent_baseurl` instead `checkmkagent_host_url`.
+xinetd -> systemd migration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To migrate to systemd, checkmk 2.2+ needs to be installed.
+
+To keep the xinetd integration for hosts which do not have checkmk 2.2+ and
+still have xinetd installed and configured `checkmkagent_service_xinetd: true`
+needs to be set.
+
+Note, no xinetd configuration is deployed anymore, even if
+`checkmkagent_service_xinetd: True` is set.
+
+mk_apt
+~~~~~~
 
 `mk_apt` was installed in `/usr/lib/check_mk_agent/plugins/60` instead of `/usr/lib/check_mk_agent/plugins/3600`.
 To delete the check on all hosts from the wrong location you could use ansible like this:
@@ -84,6 +97,11 @@ To delete the check on all hosts from the wrong location you could use ansible l
 % ansible -i hosts all -b -m shell -a "rmdir /usr/lib/check_mk_agent/plugins/60"
 
 ```
+
+Variable names
+~~~~~~~~~~~~~~
+
+Older versions of this role used the variable `checkmkagent_baseurl` instead `checkmkagent_host_url`.
 
 License
 -------
