@@ -1,22 +1,18 @@
-checkmkagent
-============
+# checkmkagent
 
 ![Lint Code Base](https://github.com/jkirk/ansible-role-checkmkagent/actions/workflows/superlinter.yml/badge.svg)
 
 A simple role to deploy the checkmk agent with some custom local checks and agent plugins.
 
-Requirements
-------------
+## Requirements
 
 N/A
 
-Role Variables
---------------
+## Role Variables
 
 See: [defaults/main.yml](https://github.com/jkirk/ansible-role-checkmkagent/tree/master/defaults/main.yml)
 
-Local checks
-------------
+## Local checks
 
 Currently the following local checks are deployed default:
 
@@ -37,8 +33,7 @@ To do so the following role variables need to be defined:
 * `checkmkagent_megacli_num_disk_groups`
 * (optionall and agent pluginsy) `checkmkagent_megacli_battery_adapter`
 
-Agent plugins
--------------
+## Agent plugins
 
 Currently the following checkmk agent plugins are supported:
 
@@ -48,13 +43,11 @@ checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
 
 For general available agent plugins see the agent plugins folder of your checkmk monitoring server (i.e. `https://monitoring.example.com/mysite/check_mk/agents/plugins/`).
 
-Dependencies
-------------
+## Dependencies
 
 N/A
 
-Example Playbook
-----------------
+## Example Playbook
 
 ```yaml
     - hosts: site
@@ -70,11 +63,9 @@ Example Playbook
            checkmkagent_plugins: [ 'mk_ceph' ]
 ```
 
-Update / Migration Notes
-------------------------
+## Update / Migration Notes
 
-xinetd -> systemd migration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### xinetd -> systemd migration
 
 To migrate to systemd, checkmk 2.2+ needs to be installed.
 
@@ -85,8 +76,7 @@ needs to be set.
 Note, no xinetd configuration is deployed anymore, even if
 `checkmkagent_service_xinetd: True` is set.
 
-mk_apt
-~~~~~~
+### mk_apt
 
 `mk_apt` was installed in `/usr/lib/check_mk_agent/plugins/60` instead of `/usr/lib/check_mk_agent/plugins/3600`.
 To delete the check on all hosts from the wrong location you could use ansible like this:
@@ -98,17 +88,14 @@ To delete the check on all hosts from the wrong location you could use ansible l
 
 ```
 
-Variable names
-~~~~~~~~~~~~~~
+### Variable names
 
 Older versions of this role used the variable `checkmkagent_baseurl` instead `checkmkagent_host_url`.
 
-License
--------
+## License
 
 MIT
 
-Author Information
-------------------
+## Author Information
 
 Darshaka Pathirana - <https://synpro.solutions>
