@@ -16,11 +16,12 @@ checkmkagent_version: '2.2.0p9'
 # Register checkmk agent for TLS
 # To register the checkmk agent for TLS checkmkagent 2.2.0 or higher needs to
 # be installed and `checkmkagent_site`, `checkmkagent_user`,
-# `checkmkagent_auth` + `checkmkagent_hostname` needs to be set.
+# `checkmkagent_auth`, `checkmkagent_hostname` + `checkmkagent_register_tls: true` needs to be set.
 # checkmkagent_site: 'mysite'
 # checkmkagent_user: 'automation'
 # checkmkagent_auth: [ should be set in vault ]
 # checkmkagent_hostname: 'monitor01.example.com'
+checkmkagent_register_tls: false
 
 # If `checkmkagent_host_url` is given the check-mk-agent package is
 # downloaded and deployed from the checkmk server: '{{ checkmkagent_host_url }}/check_mk/agents/check-mk-agent_{{ checkmkagent_version }}-1_all.deb'
