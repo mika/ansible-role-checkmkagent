@@ -21,6 +21,7 @@
     - checkmkagent_hostname is defined and checkmkagent_hostname | length
     - cmk_agent_ctl_legacy_mode.rc == 0
     - checkmkagent_register_tls
+  no_log: true
   notify: cmk-agent-ctl-daemon restart
 
 - name: Ensure legacy checkmk agent services are stopped  + disabled
