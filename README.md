@@ -38,7 +38,7 @@ To do so the following role variables need to be defined:
 Currently the following checkmk agent plugins are supported:
 
 ```yaml
-checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
+checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql', 'smart' ]
 ```
 
 For general available agent plugins see the agent plugins folder of your checkmk monitoring server (i.e. `https://monitoring.example.com/mysite/check_mk/agents/plugins/`).

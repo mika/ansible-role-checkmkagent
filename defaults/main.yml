@@ -43,7 +43,7 @@ checkmkagent_plugins_path: "/usr/lib/check_mk_agent/plugins"
 
 # Currently the following checkmk agent plugins are supported:
 # (Don't override this variable!)
-checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql' ]
+checkmkagent_plugins_available: [ 'mk_ceph', 'mk_logwatch.py', 'mk_mysql', 'smart' ]
 
 # Some plugins should only be deployed if explicitly requested.
 # The checkmk agent plugin mk_apt will be deployed always (on Debian hosts).
