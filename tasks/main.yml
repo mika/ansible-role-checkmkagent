@@ -69,5 +69,4 @@
 - include_tasks: monitoring-storagebox.yml
   when:
     - checkmkagent_storagebox_number is defined
-    - checkmkagent_storagebox_username is defined
-    - checkmkagent_storagebox_password is defined
+    - checkmkagent_storagebox_api_token is defined

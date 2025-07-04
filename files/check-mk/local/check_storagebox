@@ -1,4 +1,8 @@
 #!/bin/bash
+# HEADER: managed by ansible, do NOT edit manually!
+#
+# Purpose: check disk usage of a Hetzner Storage Box
+# API docs: https://docs.hetzner.cloud/reference/hetzner#storage-boxes
 
 set -e -E -u -o pipefail
 
@@ -17,27 +21,16 @@ if ! command -v jq &>/dev/null ; then
   exit 1
 fi
 
-# if ! command -v bc &>/dev/null ; then
-#   echo "2 ${PN} - Error: bc binary not present."
-#   exit 1
-# fi
-
-# move to config?
 if [ -r "${MK_CONFDIR:-/etc/check_mk}/${PN}" ] ; then
   # shellcheck source=/dev/null
   . "${MK_CONFDIR:-/etc/check_mk}/${PN}"
 else
-  echo "2 ${PN} - Error: configuration file ${MK_CONFDIR:-/etc/check_mk}/${PN} does not exist"
+  echo "2 ${PN} - Error: configuration file ${MK_CONFDIR:-/etc/check_mk}/${PN} does not exist or could not be read"
   exit 1
 fi
 
-if [ -z "${USERNAME:-}" ] ; then
-  echo "2 ${PN} - Error: forgot to configure USERNAME=... in '${MK_CONFDIR:-/etc/check_mk}/${PN}'?"
-  exit 1
-fi
-
-if [ -z "${PASSWORD}" ] ; then
-  echo "2 ${PN} - Error: forgot to configure PASSWORD=... in '${MK_CONFDIR:-/etc/check_mk}/${PN}'?"
+if [ -z "${API_TOKEN}" ] ; then
+  echo "2 ${PN} - Error: forgot to configure API_TOKEN... in '${MK_CONFDIR:-/etc/check_mk}/${PN}'?"
   exit 1
 fi
 
@@ -51,18 +44,7 @@ if [ -z "${STORAGEBOX:-}" ] ; then
   exit 1
 fi
 
-# Rounding Numbers with bc in Bash
-# round() taken from: https://stackoverflow.com/a/26864946
-
-# round() is only needed if - for any reason - we want to calculate usage_in_percent (see below)
-# round() {
-#     # $1 is expression to round (should be a valid bc expression)
-#     # $2 is number of decimal figures (optional). Defaults to 2 if none given
-#     local df=${2:-2}
-#     printf '%.*f\n' "$df" "$(bc -l <<< "a=$1; if(a>0) a+=5/10^($df+1) else if (a<0) a-=5/10^($df+1); scale=$df; a/1")"
-# }
-
-OUTPUT="$(mktemp)"
+OUTPUT="$(mktemp -t check_storagebox-XXXXXXXXXX)"
 
 parse_output() {
   if [[ "$(jq '.error' < "${OUTPUT}")" != "null" ]] ; then
@@ -70,20 +52,11 @@ parse_output() {
     return 0
   fi
 
-  disk_quota=$(jq '.storagebox.disk_quota' "${OUTPUT}")
-  disk_usage=$(jq '.storagebox.disk_usage' "${OUTPUT}")
+  disk_quota=$(jq ".storage_boxes[] | select(.id==${STORAGEBOX}) | .storage_box_type.size" "${OUTPUT}")
+  disk_usage=$(jq ".storage_boxes[] | select(.id==${STORAGEBOX}) | .stats.size" "${OUTPUT}")
 
-  # we get information for space in MB but need to convert it to bytes for check-mk RRD/metrics
-  disk_quota_bytes=$(( disk_quota * 1024 * 1024))
-  disk_usage_bytes=$(( disk_usage * 1024 * 1024))
-  disk_usage_warn=$(( disk_quota_bytes * USAGE_WARN / 100))
-  disk_usage_crit=$(( disk_quota_bytes * USAGE_CRIT / 100))
-
-  # JFR: calculate disk free:
-  # disk_free_bytes=$(( disk_quota_bytes - disk_usage_bytes ))
-
-  # JFR: calculate with maximal precision but output with two decimals only
-  # usage_in_percent=$(round "${disk_usage} / ${disk_quota} * 100" 2)
+  disk_usage_warn=$(( disk_quota * USAGE_WARN / 100))
+  disk_usage_crit=$(( disk_quota * USAGE_CRIT / 100))
 
   # Local checks syntax:
   # https://docs.checkmk.com/latest/en/localchecks.html#dynamic_state
@@ -98,13 +71,14 @@ parse_output() {
   # The metrics + graphs (fs_used, fs_size) are defined here:
   # /opt/omd/sites/synpros/version/lib/python3/cmk/gui/plugins/metrics/fs.py
 
-  result="P ${PN} fs_used=${disk_usage_bytes};${disk_usage_warn};${disk_usage_crit} fs_size=${disk_quota_bytes}"
+  result="P ${PN} fs_used=${disk_usage};${disk_usage_warn};${disk_usage_crit}|fs_size=${disk_quota}"
 }
 
-timeout --kill-after=3 "${TIMEOUT}" curl --silent curl -s -u "${USERNAME}:${PASSWORD}" "https://robot-ws.your-server.de/storagebox/${STORAGEBOX}" > "${OUTPUT}"
+rc=0
+timeout --kill-after=3 "${TIMEOUT}" curl --silent -H "Authorization: Bearer ${API_TOKEN}" https://api.hetzner.com/v1/storage_boxes > "${OUTPUT}" || rc=$?
 # NOTE: we get exit code 124 if the curl cmdline timed out
-if [[ $? -eq 124 ]] ; then
-  echo "1 ${PN} - Timeout - querying of Hetzner StorageBox API didn't finish within timeout [$TIMEOUT]"
+if [[ $rc -eq 124 ]] ; then
+  echo "1 ${PN} - Timeout - querying of Hetzner StorageBox API didn't finish within timeout [$TIMEOUT seconds]"
 else
   parse_output
   echo "${result:-unhandled error}"
